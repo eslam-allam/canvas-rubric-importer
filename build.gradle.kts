@@ -29,8 +29,9 @@ java {
 
 application {
     // Default entry point – CLI.
-    mainClass.set("com.example.canvas.cli.CliApp")
+    mainClass.set("io.github.eslam_allam.canvas.cli.CliApp")
 }
+
 
 // Convenience tasks to run CLI and GUI explicitly via the existing 'run' task
 
@@ -39,7 +40,7 @@ tasks.register("runCli") {
     description = "Run the CLI application"
     doFirst {
         application {
-            mainClass.set("com.example.canvas.cli.CliApp")
+            mainClass.set("io.github.eslam_allam.canvas.cli.CliApp")
         }
     }
     finalizedBy(tasks.named("run"))
@@ -50,7 +51,7 @@ tasks.register("runGui") {
     description = "Run the JavaFX GUI application"
     doFirst {
         application {
-            mainClass.set("com.example.canvas.gui.CanvasRubricGuiApp")
+            mainClass.set("io.github.eslam_allam.canvas.gui.CanvasRubricGuiApp")
         }
     }
     finalizedBy(tasks.named("run"))
@@ -59,9 +60,99 @@ tasks.register("runGui") {
 
 
 
+
 javafx {
     version = "25"
     modules = listOf("javafx.controls", "javafx.graphics", "javafx.base")
 }
+
+// ---------------- jpackage packaging tasks ----------------
+
+val appName = "CanvasRubricImporter"
+val appVersion = (project.version.takeIf { it != "unspecified" } ?: "1.0.0").toString()
+val mainClassName = "io.github.eslam_allam.canvas.gui.CanvasRubricGuiApp"
+
+
+val jpackageOutputDir = layout.buildDirectory.dir("jpackage")
+
+// Build DEB (Linux)
+tasks.register<org.gradle.api.tasks.Exec>("packageDeb") {
+    group = "distribution"
+    description = "Build DEB installer using jpackage (run on Linux)."
+
+    dependsOn("jar")
+
+    doFirst {
+        jpackageOutputDir.get().asFile.mkdirs()
+    }
+
+    val libsDir = layout.buildDirectory.dir("libs").get().asFile
+    commandLine(
+        "jpackage",
+        "--type", "deb",
+        "--name", appName,
+        "--app-version", appVersion,
+        "--input", libsDir.absolutePath,
+        "--main-jar", "${project.name}-${project.version}.jar",
+        "--main-class", mainClassName,
+        "--dest", jpackageOutputDir.get().asFile.absolutePath,
+        "--icon", "icons/canvas-rubric-gui.png",
+        "--vendor", "Canvas Rubric Importer"
+    )
+}
+
+// Build RPM (Linux)
+tasks.register<org.gradle.api.tasks.Exec>("packageRpm") {
+    group = "distribution"
+    description = "Build RPM installer using jpackage (run on Linux)."
+
+    dependsOn("jar")
+
+    doFirst {
+        jpackageOutputDir.get().asFile.mkdirs()
+    }
+
+    val libsDir = layout.buildDirectory.dir("libs").get().asFile
+    commandLine(
+        "jpackage",
+        "--type", "rpm",
+        "--name", appName,
+        "--app-version", appVersion,
+        "--input", libsDir.absolutePath,
+        "--main-jar", "${project.name}-${project.version}.jar",
+        "--main-class", mainClassName,
+        "--dest", jpackageOutputDir.get().asFile.absolutePath,
+        "--icon", "icons/canvas-rubric-gui.png",
+        "--vendor", "Canvas Rubric Importer"
+    )
+}
+
+// Build MSI (Windows)
+tasks.register<org.gradle.api.tasks.Exec>("packageMsi") {
+    group = "distribution"
+    description = "Build MSI installer using jpackage (run on Windows)."
+
+    dependsOn("jar")
+
+    doFirst {
+        jpackageOutputDir.get().asFile.mkdirs()
+    }
+
+    val libsDir = layout.buildDirectory.dir("libs").get().asFile
+    commandLine(
+        "jpackage",
+        "--type", "msi",
+        "--name", appName,
+        "--app-version", appVersion,
+        "--input", libsDir.absolutePath,
+        "--main-jar", "${project.name}-${project.version}.jar",
+        "--main-class", mainClassName,
+        "--dest", jpackageOutputDir.get().asFile.absolutePath,
+        // Use a .ico on Windows if you have one; fall back to PNG otherwise
+        // "--icon", "icons/canvas-rubric-gui.ico",
+        "--vendor", "Canvas Rubric Importer"
+    )
+}
+
 
 

@@ -1,9 +1,10 @@
-package com.example.canvas.gui;
+package io.github.eslam_allam.canvas.gui;
 
-import com.example.canvas.core.CanvasClient;
-import com.example.canvas.core.CsvRubricParser;
-import com.example.canvas.core.RubricModels;
+import io.github.eslam_allam.canvas.core.CanvasClient;
+import io.github.eslam_allam.canvas.core.CsvRubricParser;
+import io.github.eslam_allam.canvas.core.RubricModels;
 import com.fasterxml.jackson.databind.JsonNode;
+
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;

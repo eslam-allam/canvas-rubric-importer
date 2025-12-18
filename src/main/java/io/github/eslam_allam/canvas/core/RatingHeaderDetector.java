@@ -1,4 +1,4 @@
-package com.example.canvas.core;
+package io.github.eslam_allam.canvas.core;
 
 import java.util.ArrayList;
 import java.util.Comparator;

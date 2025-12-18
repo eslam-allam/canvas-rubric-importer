@@ -1,8 +1,9 @@
-package com.example.canvas.cli;
+package io.github.eslam_allam.canvas.cli;
 
-import com.example.canvas.core.CanvasClient;
-import com.example.canvas.core.CsvRubricParser;
-import com.example.canvas.core.RubricModels;
+import io.github.eslam_allam.canvas.core.CanvasClient;
+import io.github.eslam_allam.canvas.core.CsvRubricParser;
+import io.github.eslam_allam.canvas.core.RubricModels;
+
 
 import java.nio.file.Path;
 import java.util.List;

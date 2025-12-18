@@ -11,13 +11,26 @@ import java.util.List;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.text.StringEscapeUtils;
+
 
 
 public final class CsvRubricParser {
 
     public record ParsedRubric(List<RubricModels.Criterion> criteria, double totalPoints) {}
 
+    private final boolean decodeHtmlEntities;
+
+    public CsvRubricParser() {
+        this(true);
+    }
+
+    public CsvRubricParser(boolean decodeHtmlEntities) {
+        this.decodeHtmlEntities = decodeHtmlEntities;
+    }
+
     public ParsedRubric parse(Path csvPath) throws IOException {
+
         try (BufferedReader reader = Files.newBufferedReader(csvPath, StandardCharsets.UTF_8);
              CSVParser parser = CSVFormat.DEFAULT
                  .builder()
@@ -56,7 +69,8 @@ public final class CsvRubricParser {
                     continue;
                 }
 
-                String criterion = record.get(criterionIdx).trim();
+                String criterion = normalizeText(record.get(criterionIdx).trim());
+
                 if (criterion.isEmpty()) {
                     throw new IllegalArgumentException("Row " + rowNum + ": empty criterion.");
                 }
@@ -65,13 +79,15 @@ public final class CsvRubricParser {
                 double points = parseDouble(pointsRaw, "Row " + rowNum + ": points must be numeric.");
                 total += points;
 
-                String desc = criterionDescIdx >= 0 ? record.get(criterionDescIdx).trim() : "";
+                String desc = criterionDescIdx >= 0 ? normalizeText(record.get(criterionDescIdx).trim()) : "";
+
 
                 List<RubricModels.Rating> ratings = new ArrayList<>();
                 for (RatingHeaderDetector.RatingGroup g : ratingGroups) {
-                    String name = getField(record, headers, g.nameColumn());
+                    String name = normalizeText(getField(record, headers, g.nameColumn()));
                     String ptsRaw = getField(record, headers, g.pointsColumn());
-                    String longDesc = getField(record, headers, g.descColumn());
+                    String longDesc = normalizeText(getField(record, headers, g.descColumn()));
+
 
                     if (name.isBlank() && ptsRaw.isBlank() && longDesc.isBlank()) {
                         continue;
@@ -145,7 +161,18 @@ public final class CsvRubricParser {
         return -1;
     }
 
+    private String normalizeText(String s) {
+        if (s == null || s.isEmpty()) {
+            return "";
+        }
+        if (!decodeHtmlEntities) {
+            return s;
+        }
+        return StringEscapeUtils.unescapeHtml4(s);
+    }
+
     private static String getField(CSVRecord record, String[] header, String columnName) {
+
         int idx = indexOf(header, columnName);
         if (idx < 0 || idx >= record.size()) {
             return "";

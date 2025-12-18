@@ -60,7 +60,16 @@ public final class CliApp {
             System.exit(1);
         }
 
-        CsvRubricParser parser = new CsvRubricParser();
+
+        boolean decodeHtml = true;
+        for (String arg : args) {
+            if ("--no-html-decode".equals(arg)) {
+                decodeHtml = false;
+            }
+        }
+
+        CsvRubricParser parser = new CsvRubricParser(decodeHtml);
+
         CsvRubricParser.ParsedRubric parsed = parser.parse(csvPath);
         List<RubricModels.Criterion> criteria = parsed.criteria();
         double totalPoints = parsed.totalPoints();
@@ -101,5 +110,8 @@ public final class CliApp {
 
     private static void printUsage() {
         System.out.println("Usage: java -jar app.jar --course-id <id> --assignment-id <id> --title <title> --csv <file> [options]");
+        System.out.println("Options:");
+        System.out.println("  --no-html-decode   Do not decode HTML entities in text fields (e.g., &amp;lt;, -&gt;).");
     }
 }
+

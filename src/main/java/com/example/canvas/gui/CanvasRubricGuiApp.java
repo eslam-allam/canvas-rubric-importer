@@ -55,6 +55,8 @@ public class CanvasRubricGuiApp extends Application {
     private CheckBox useForGradingCheck;
     private CheckBox hideScoreTotalCheck;
     private CheckBox syncPointsCheck;
+    private CheckBox decodeHtmlCheck;
+
     private Label statusLabel;
 
     private TableView<RubricRow> rubricPreviewTable;
@@ -206,6 +208,9 @@ public class CanvasRubricGuiApp extends Application {
         useForGradingCheck.setSelected(true);
         hideScoreTotalCheck = new CheckBox("Hide score total");
         syncPointsCheck = new CheckBox("Sync assignment points to rubric total");
+        decodeHtmlCheck = new CheckBox("Decode HTML entities in CSV text");
+        decodeHtmlCheck.setSelected(true);
+
 
         Button browseBtn = new Button("Browse...");
         browseBtn.setOnAction(e -> onBrowseCsv());
@@ -257,6 +262,8 @@ public class CanvasRubricGuiApp extends Application {
         grid.add(useForGradingCheck, 0, row++, 2, 1);
         grid.add(hideScoreTotalCheck, 0, row++, 2, 1);
         grid.add(syncPointsCheck, 0, row++, 3, 1);
+        grid.add(decodeHtmlCheck, 0, row++, 3, 1);
+
 
         grid.add(statusLabel, 0, row++, 3, 1);
 
@@ -470,7 +477,8 @@ public class CanvasRubricGuiApp extends Application {
         setStatus("Loading preview...");
         new Thread(() -> {
             try {
-                CsvRubricParser parser = new CsvRubricParser();
+                CsvRubricParser parser = new CsvRubricParser(decodeHtmlCheck.isSelected());
+
                 CsvRubricParser.ParsedRubric parsed = parser.parse(csvPath);
 
                 List<RubricModels.Criterion> criteria = parsed.criteria();
@@ -745,7 +753,8 @@ public class CanvasRubricGuiApp extends Application {
         setStatus("Reading CSV...");
         new Thread(() -> {
             try {
-                CsvRubricParser parser = new CsvRubricParser();
+                CsvRubricParser parser = new CsvRubricParser(decodeHtmlCheck.isSelected());
+
                 CsvRubricParser.ParsedRubric parsed = parser.parse(Path.of(csvPath));
                 List<RubricModels.Criterion> criteria = parsed.criteria();
                 double total = parsed.totalPoints();

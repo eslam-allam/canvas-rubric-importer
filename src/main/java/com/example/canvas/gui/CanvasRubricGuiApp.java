@@ -286,7 +286,7 @@ public class CanvasRubricGuiApp extends Application {
 
         HBox buttons = new HBox(10, createBtn, quitBtn);
         buttons.getStyleClass().add("bottom-actions");
-        grid.add(buttons, 1, row, 3, 1);
+        grid.add(buttons, 0, row, 3, 1);
 
 
 

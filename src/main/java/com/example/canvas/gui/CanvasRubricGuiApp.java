@@ -10,6 +10,7 @@ import javafx.beans.property.ReadOnlyStringWrapper;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
@@ -56,6 +57,8 @@ public class CanvasRubricGuiApp extends Application {
     private CheckBox hideScoreTotalCheck;
     private CheckBox syncPointsCheck;
     private CheckBox decodeHtmlCheck;
+    private Button showPreviewBtn;
+
 
     private Label statusLabel;
 
@@ -215,8 +218,9 @@ public class CanvasRubricGuiApp extends Application {
         Button browseBtn = new Button("Browse...");
         browseBtn.setOnAction(e -> onBrowseCsv());
 
-        Button showPreviewBtn = new Button("Show Preview");
+        showPreviewBtn = new Button("Show Preview");
         showPreviewBtn.setOnAction(e -> showPreviewFullHeight());
+
 
 
         Button downloadTemplateBtn = new Button("Download CSV Template");
@@ -267,10 +271,7 @@ public class CanvasRubricGuiApp extends Application {
 
         grid.add(statusLabel, 0, row++, 3, 1);
 
-        Button backToMainBtn = new Button("Back to Main View");
-        backToMainBtn.setOnAction(e -> showMainView());
-
-        HBox buttons = new HBox(10, createBtn, backToMainBtn, quitBtn);
+        HBox buttons = new HBox(10, createBtn, quitBtn);
         grid.add(buttons, 1, row, 3, 1);
 
 
@@ -375,13 +376,22 @@ public class CanvasRubricGuiApp extends Application {
             showError("Error", "Please select a CSV file first.");
             return;
         }
+        if (showPreviewBtn != null) {
+            showPreviewBtn.setVisible(false);
+            showPreviewBtn.setManaged(false);
+        }
         loadRubricPreview(Path.of(path));
     }
 
 
     private void showMainView() {
         root.setCenter(mainCenterPane);
+        if (showPreviewBtn != null) {
+            showPreviewBtn.setVisible(true);
+            showPreviewBtn.setManaged(true);
+        }
     }
+
 
 
     private void ensureRubricPreviewTable(int maxRatings, List<String> ratingHeaders) {

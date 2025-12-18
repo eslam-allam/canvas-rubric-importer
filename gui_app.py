@@ -259,9 +259,14 @@ class CanvasRubricGUI(tk.Tk):
         def update_list():
             self.course_list.delete(0, tk.END)
             for c in self.courses:
-                name = c.get("name") or c.get("course_code") or str(c.get("id"))
-                self.course_list.insert(tk.END, f"{c['id']}: {name}")
+                name = c.get("name") or str(c.get("id"))
+                code = c.get("course_code") or ""
+                display = (
+                    f"{c['id']}: {name} [{code}]" if code else f"{c['id']}: {name}"
+                )
+                self.course_list.insert(tk.END, display)
             self._set_status(f"Loaded {len(self.courses)} courses")
+
 
         self.after(0, update_list)
 

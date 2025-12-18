@@ -394,13 +394,9 @@ public class CanvasRubricGuiApp extends Application {
 
 
 
-    private void ensureRubricPreviewTable(int maxRatings, List<String> ratingHeaders) {
-        if (rubricPreviewTable == null) {
-            rubricPreviewTable = new TableView<>();
-            rubricPreviewTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        } else {
-            rubricPreviewTable.getColumns().clear();
-        }
+    private TableView<RubricRow> buildRubricPreviewTable(int maxRatings, List<String> ratingHeaders) {
+        TableView<RubricRow> table = new TableView<>();
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         TableColumn<RubricRow, String> critCol = new TableColumn<>("Criterion");
         critCol.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().getCriterion()));
@@ -435,9 +431,11 @@ public class CanvasRubricGuiApp extends Application {
             ratingCols.add(ratingCol);
         }
 
-        rubricPreviewTable.getColumns().addAll(critCol, descCol, pointsCol);
-        rubricPreviewTable.getColumns().addAll(ratingCols);
+        table.getColumns().addAll(critCol, descCol, pointsCol);
+        table.getColumns().addAll(ratingCols);
+        return table;
     }
+
 
 
 
@@ -465,8 +463,8 @@ public class CanvasRubricGuiApp extends Application {
 
     private BorderPane buildFullHeightPreviewPane() {
 
-
         BorderPane pane = new BorderPane();
+
         pane.setPadding(new Insets(10));
 
         Label label = new Label("Rubric Preview");
@@ -520,12 +518,12 @@ public class CanvasRubricGuiApp extends Application {
                 final int finalMaxRatings = maxRatings;
                 final List<String> finalRatingHeaders = ratingHeaders;
                 Platform.runLater(() -> {
-                    ensureRubricPreviewTable(finalMaxRatings, finalRatingHeaders);
-
+                    rubricPreviewTable = buildRubricPreviewTable(finalMaxRatings, finalRatingHeaders);
                     rubricPreviewTable.getItems().setAll(rows);
                     root.setCenter(buildFullHeightPreviewPane());
                     setStatus("Preview loaded");
                 });
+
 
             } catch (Exception ex) {
                 Platform.runLater(() -> {

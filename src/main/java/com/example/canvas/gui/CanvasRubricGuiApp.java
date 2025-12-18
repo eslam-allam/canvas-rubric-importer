@@ -14,10 +14,12 @@ import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 
 import javafx.scene.input.Clipboard;
 import javafx.scene.text.Text;
+
 
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.BorderPane;
@@ -30,6 +32,8 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.util.Objects;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -78,13 +82,13 @@ public class CanvasRubricGuiApp extends Application {
         primaryStage.setTitle("Canvas Rubric Uploader");
 
         root = new BorderPane();
-
-        root.setPadding(new Insets(10));
-
+        root.getStyleClass().add("app-root");
 
         VBox topBox = new VBox(10);
-        topBox.getChildren().add(buildConnectionPane());
+        topBox.getStyleClass().add("top-bar");
+        topBox.getChildren().add(wrapInCard("Canvas Connection", buildConnectionPane()));
         root.setTop(topBox);
+
 
         loadSettings();
 
@@ -92,18 +96,25 @@ public class CanvasRubricGuiApp extends Application {
         mainCenterPane = new SplitPane();
         mainCenterPane.getItems().add(buildCoursesPane());
         mainCenterPane.getItems().add(buildAssignmentsPane());
+
         mainCenterPane.setDividerPositions(0.5);
         root.setCenter(mainCenterPane);
 
 
+
         VBox bottomBox = new VBox(10);
-        bottomBox.getChildren().add(buildRubricPane());
+        bottomBox.getChildren().add(wrapInCard("Rubric Configuration", buildRubricPane()));
         root.setBottom(bottomBox);
 
-
-
-        Scene scene = new Scene(root, 900, 600);
+        Scene scene = new Scene(root, 1000, 650);
+        scene.getStylesheets().add(
+            Objects.requireNonNull(
+                getClass().getResource("/style.css"),
+                "style.css not found on classpath"
+            ).toExternalForm()
+        );
         primaryStage.setScene(scene);
+
         primaryStage.show();
     }
 
@@ -240,8 +251,10 @@ public class CanvasRubricGuiApp extends Application {
         quitBtn.setOnAction(e -> Platform.exit());
 
         statusLabel = new Label("Idle");
+        statusLabel.getStyleClass().add("status-label");
 
         int row = 0;
+
         grid.add(new Label("Selected Course ID:"), 0, row);
         grid.add(courseIdField, 1, row++);
 
@@ -272,13 +285,28 @@ public class CanvasRubricGuiApp extends Application {
         grid.add(statusLabel, 0, row++, 3, 1);
 
         HBox buttons = new HBox(10, createBtn, quitBtn);
+        buttons.getStyleClass().add("bottom-actions");
         grid.add(buttons, 1, row, 3, 1);
+
+
 
 
         return grid;
     }
 
+    private VBox wrapInCard(String title, Node content) {
+        VBox box = new VBox(6);
+        box.getStyleClass().add("section-card");
+
+        Label titleLabel = new Label(title);
+        titleLabel.getStyleClass().add("section-title");
+
+        box.getChildren().addAll(titleLabel, content);
+        return box;
+    }
+
     private void onSaveSettings() {
+
         prefs.put("baseUrl", baseUrlField.getText().trim());
         prefs.put("token", tokenField.getText());
         showInfo("Saved", "Settings saved.");

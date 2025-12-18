@@ -1,0 +1,163 @@
+/* filepath: src/main/resources/style.css */
+
+.root {
+    -fx-font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    -fx-background-color: #f3f4f6;
+    -fx-text-fill: #111827;
+}
+
+.app-root {
+    -fx-padding: 14;
+}
+
+.section-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: #e5e7eb;
+    -fx-border-width: 1;
+    -fx-padding: 12;
+}
+
+
+.section-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #111827;
+    -fx-padding: 0 0 8 0;
+}
+
+.label {
+    -fx-text-fill: #111827;
+    -fx-font-size: 12px;
+}
+
+
+.label-strong {
+    -fx-font-weight: 600;
+}
+
+.text-field,
+.password-field {
+    -fx-background-color: #f9fafb;
+    -fx-text-fill: #111827;
+    -fx-prompt-text-fill: #9ca3af;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-border-color: #d1d5db;
+
+    -fx-border-width: 1;
+    -fx-padding: 4 8 4 8;
+    -fx-font-size: 12px;
+}
+
+.text-field:focused,
+.password-field:focused {
+    -fx-border-color: #2563eb;
+}
+
+
+.list-view {
+    -fx-background-color: #ffffff;
+    -fx-control-inner-background: #ffffff;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-border-color: #e5e7eb;
+
+    -fx-border-width: 1;
+    -fx-cell-size: 24px;
+    -fx-padding: 4;
+}
+
+.table-view {
+    -fx-background-color: #ffffff;
+    -fx-table-cell-border-color: #e5e7eb;
+    -fx-border-color: #e5e7eb;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+
+    -fx-padding: 4;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #f3f4f6;
+}
+
+.table-view .column-header,
+.table-view .filler {
+    -fx-border-color: transparent transparent #d1d5db transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-text-fill: #374151;
+
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+}
+
+.table-row-cell {
+    -fx-background-color: transparent;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: #f9fafb;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #dbeafe;
+}
+
+
+.button {
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-background-color: #2563eb;
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 12px;
+    -fx-font-weight: 500;
+    -fx-padding: 4 12 4 12;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+}
+
+.button:hover {
+    -fx-background-color: #1d4ed8;
+}
+
+.button:pressed {
+    -fx-background-color: #1e40af;
+}
+
+.button-secondary {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #d1d5db;
+    -fx-text-fill: #374151;
+}
+
+.button-danger {
+    -fx-background-color: #dc2626;
+}
+
+
+.check-box {
+    -fx-text-fill: #374151;
+    -fx-font-size: 12px;
+}
+
+.status-label {
+    -fx-text-fill: #2563eb;
+    -fx-font-size: 11px;
+}
+
+
+.top-bar {
+    -fx-spacing: 10;
+}
+
+.bottom-actions {
+    -fx-spacing: 10;
+}
+
+.split-pane:horizontal > .split-pane-divider,
+.split-pane:vertical > .split-pane-divider {
+    -fx-background-color: #e5e7eb;
+}
+

@@ -72,6 +72,21 @@ def read_rubric_csv(path: str) -> Tuple[List[Dict[str, Any]], float]:
                 "CSV must have at least rating1/rating1_points/rating1_desc etc."
             )
 
+        # Strict header mode: disallow unexpected columns.
+        # Allowed:
+        #   - criterion, criterion_desc, points
+        #   - ratingN, ratingN_points, ratingN_desc for all detected groups
+        allowed: set[str] = {"criterion", "criterion_desc", "points"}
+        for name_col, pts_col, desc_col in rating_groups:
+            allowed.update({name_col, pts_col, desc_col})
+
+        extra_cols = [col for col in header if col not in allowed]
+        if extra_cols:
+            raise ValueError(
+                "Unexpected column(s) in header: " + ", ".join(sorted(extra_cols))
+            )
+
+
         rows: List[Dict[str, Any]] = []
         total = 0.0
         row_num = 1

@@ -210,8 +210,12 @@ public class CanvasRubricGuiApp extends Application {
 
         courseIdField = new TextField();
         courseIdField.setEditable(false);
+        courseIdField.getStyleClass().add("readonly");
+
         assignmentIdField = new TextField();
         assignmentIdField.setEditable(false);
+        assignmentIdField.getStyleClass().add("readonly");
+
         titleField = new TextField();
         csvPathField = new TextField();
 

@@ -46,6 +46,7 @@
     -fx-border-radius: 4;
     -fx-border-color: #d1d5db;
 
+
     -fx-border-width: 1;
     -fx-padding: 4 8 4 8;
     -fx-font-size: 12px;
@@ -55,6 +56,12 @@
 .password-field:focused {
     -fx-border-color: #2563eb;
 }
+
+.text-field.readonly {
+    -fx-background-color: #e5e7eb;
+    -fx-text-fill: #4b5563;
+}
+
 
 
 .list-view {

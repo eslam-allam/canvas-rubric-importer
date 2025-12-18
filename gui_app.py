@@ -261,11 +261,10 @@ class CanvasRubricGUI(tk.Tk):
             for c in self.courses:
                 name = c.get("name") or str(c.get("id"))
                 code = c.get("course_code") or ""
-                display = (
-                    f"{c['id']}: {name} [{code}]" if code else f"{c['id']}: {name}"
-                )
+                display = f"{name} [{code}]" if code else name
                 self.course_list.insert(tk.END, display)
             self._set_status(f"Loaded {len(self.courses)} courses")
+
 
 
         self.after(0, update_list)
@@ -280,8 +279,9 @@ class CanvasRubricGUI(tk.Tk):
             self.assignment_list.delete(0, tk.END)
             for a in self.assignments:
                 name = a.get("name") or str(a.get("id"))
-                self.assignment_list.insert(tk.END, f"{a['id']}: {name}")
+                self.assignment_list.insert(tk.END, name)
             self._set_status(f"Loaded {len(self.assignments)} assignments")
+
 
         self.after(0, update_list)
 

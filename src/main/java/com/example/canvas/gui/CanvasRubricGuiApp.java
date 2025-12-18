@@ -23,6 +23,9 @@ import javafx.stage.Stage;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -193,8 +196,12 @@ public class CanvasRubricGuiApp extends Application {
         Button copyTemplateBtn = new Button("Copy Template to Clipboard");
         copyTemplateBtn.setOnAction(e -> onCopyTemplate());
 
+        Button downloadRubricBtn = new Button("Download Rubric as CSV");
+        downloadRubricBtn.setOnAction(e -> onDownloadRubricCsv());
+
         Button createBtn = new Button("Create Rubric");
         createBtn.setOnAction(e -> onCreate());
+
 
         Button quitBtn = new Button("Quit");
         quitBtn.setOnAction(e -> Platform.exit());
@@ -217,6 +224,8 @@ public class CanvasRubricGuiApp extends Application {
 
         grid.add(downloadTemplateBtn, 2, row++);
         grid.add(copyTemplateBtn, 2, row++);
+        grid.add(downloadRubricBtn, 2, row++);
+
 
         grid.add(freeFormCommentsCheck, 0, row++, 2, 1);
         grid.add(useForGradingCheck, 0, row++, 2, 1);
@@ -322,19 +331,24 @@ public class CanvasRubricGuiApp extends Application {
         }
     }
 
-    private List<String> templateHeader() {
+    private List<String> templateHeader(int maxRatings) {
         List<String> header = new ArrayList<>();
         header.add("criterion");
         header.add("criterion_desc");
         header.add("points");
-        header.add("rating1");
-        header.add("rating1_points");
-        header.add("rating1_desc");
-        header.add("rating2");
-        header.add("rating2_points");
-        header.add("rating2_desc");
+        for (int i = 1; i <= maxRatings; i++) {
+            header.add("rating" + i);
+            header.add("rating" + i + "_points");
+            header.add("rating" + i + "_desc");
+        }
         return header;
     }
+
+    private List<String> templateHeader() {
+        // Backwards-compatible default template with two ratings
+        return templateHeader(2);
+    }
+
 
     private void onDownloadTemplate() {
         if (assignmentIdField.getText().trim().isEmpty()) {
@@ -347,6 +361,7 @@ public class CanvasRubricGuiApp extends Application {
             return;
         }
         String safeName = rubricTitle.replaceAll("[^A-Za-z0-9_.-]+", "_");
+
         if (safeName.isBlank()) {
             safeName = "rubric";
         }
@@ -359,16 +374,17 @@ public class CanvasRubricGuiApp extends Application {
             return;
         }
 
-        try (FileWriter writer = new FileWriter(file)) {
-            writer.write(String.join(",", templateHeader()));
-            writer.write("\n");
+        try (PrintWriter writer = new PrintWriter(new FileWriter(file))) {
+            writeCsvRow(writer, templateHeader());
             showInfo("Template saved", "Saved rubric CSV template to:\n" + file.getAbsolutePath());
         } catch (IOException ex) {
+
             showError("Error", "Could not save template: " + ex.getMessage());
         }
     }
 
     private void onCopyTemplate() {
+
         if (assignmentIdField.getText().trim().isEmpty()) {
             showError("Error", "Please select an assignment first.");
             return;
@@ -379,14 +395,129 @@ public class CanvasRubricGuiApp extends Application {
             return;
         }
 
-        String header = String.join(",", templateHeader());
+        StringWriter sw = new StringWriter();
+        try (PrintWriter pw = new PrintWriter(sw)) {
+            writeCsvRow(pw, templateHeader());
+        }
+        String header = sw.toString();
+
         ClipboardContent content = new ClipboardContent();
-        content.putString(header + "\n");
+        content.putString(header);
+
         Clipboard.getSystemClipboard().setContent(content);
         showInfo("Template copied", "Rubric CSV header template copied to clipboard.");
     }
 
+    private void onDownloadRubricCsv() {
+        String token = tokenField.getText().trim();
+        if (token.isEmpty()) {
+            showError("Error", "You must enter an access token first.");
+            return;
+        }
+        String courseId = courseIdField.getText().trim();
+        if (courseId.isEmpty()) {
+            showError("Error", "Please select a course.");
+            return;
+        }
+        String assignmentId = assignmentIdField.getText().trim();
+        if (assignmentId.isEmpty()) {
+            showError("Error", "Please select an assignment.");
+            return;
+        }
+
+        FileChooser chooser = new FileChooser();
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV files", "*.csv"));
+        chooser.setInitialFileName("rubric_assignment_" + assignmentId + ".csv");
+        File file = chooser.showSaveDialog(null);
+        if (file == null) {
+            return;
+        }
+
+        setStatus("Downloading rubric...");
+        new Thread(() -> {
+            try {
+                CanvasClient client = new CanvasClient(baseUrlField.getText().trim(), token);
+                JsonNode assignment = client.getAssignmentWithRubric(courseId, assignmentId);
+                JsonNode rubric = assignment.path("rubric");
+                if (rubric.isMissingNode() || !rubric.isArray() || rubric.isEmpty()) {
+
+                    Platform.runLater(() -> {
+                        setStatus("No rubric");
+                        showError("Error", "This assignment has no rubric.");
+                    });
+                    return;
+                }
+
+                int maxRatings = 0;
+                for (JsonNode crit : rubric) {
+                    JsonNode ratings = crit.path("ratings");
+                    if (ratings.isArray()) {
+                        maxRatings = Math.max(maxRatings, ratings.size());
+                    }
+                }
+                if (maxRatings == 0) {
+                    Platform.runLater(() -> {
+                        setStatus("No ratings");
+                        showError("Error", "The rubric has no ratings.");
+                    });
+                    return;
+                }
+
+                List<String> header = templateHeader(maxRatings);
+                List<List<String>> rows = new ArrayList<>();
+
+                for (JsonNode crit : rubric) {
+                    String description = crit.path("description").asText("");
+                    String longDesc = crit.path("long_description").asText("");
+                    String points = crit.path("points").asText("");
+
+                    JsonNode ratings = crit.path("ratings");
+                    List<String> row = new ArrayList<>();
+                    row.add(description);
+                    row.add(longDesc);
+                    row.add(points);
+
+                    int count = ratings.isArray() ? ratings.size() : 0;
+                    for (int i = 0; i < maxRatings; i++) {
+                        if (i < count) {
+                            JsonNode r = ratings.get(i);
+                            row.add(r.path("description").asText(""));
+                            row.add(r.path("points").asText(""));
+                            row.add(r.path("long_description").asText(""));
+                        } else {
+                            row.add("");
+                            row.add("");
+                            row.add("");
+                        }
+                    }
+                    rows.add(row);
+                }
+
+
+                try (PrintWriter writer = new PrintWriter(new FileWriter(file))) {
+                    writeCsvRow(writer, header);
+                    for (List<String> row : rows) {
+                        writeCsvRow(writer, row);
+                    }
+                }
+
+
+                Platform.runLater(() -> {
+                    setStatus("Done");
+                    showInfo("Rubric downloaded", "Saved rubric CSV to:\n" + file.getAbsolutePath());
+                });
+
+            } catch (Exception ex) {
+                Platform.runLater(() -> {
+                    setStatus("Error");
+                    showError("Error", ex.getMessage());
+                });
+            }
+        }, "download-rubric").start();
+    }
+
     private void onCreate() {
+
         String token = tokenField.getText().trim();
         if (token.isEmpty()) {
             showError("Error", "You must enter an access token first.");
@@ -481,7 +612,27 @@ public class CanvasRubricGuiApp extends Application {
         alert.showAndWait();
     }
 
+    private void writeCsvRow(PrintWriter writer, List<String> cells) {
+        for (int i = 0; i < cells.size(); i++) {
+            if (i > 0) {
+                writer.print(",");
+            }
+            writer.print(escapeCsv(cells.get(i)));
+        }
+        writer.print("\n");
+    }
+
+    private String escapeCsv(String value) {
+        if (value == null) {
+            return "";
+        }
+        boolean hasSpecial = value.contains(",") || value.contains("\n") || value.contains("\r") || value.contains("\"");
+        String escaped = value.replace("\"", "\"\"");
+        return hasSpecial ? "\"" + escaped + "\"" : escaped;
+    }
+
     public static void main(String[] args) {
         launch(args);
     }
 }
+

@@ -81,6 +81,22 @@ public final class CanvasClient {
         return getPaginated(url);
     }
 
+    public JsonNode getAssignmentWithRubric(String courseId, String assignmentId) throws IOException, InterruptedException {
+        String url = String.format("%s/api/v1/courses/%s/assignments/%s?include=rubric,assignment_visibility,overrides,ab_guid", baseUrl, courseId, assignmentId);
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .header("Authorization", "Bearer " + token)
+            .GET()
+            .build();
+
+        HttpResponse<String> response = httpClient.send(request, BodyHandlers.ofString());
+        if (response.statusCode() >= 400) {
+            throw new IOException("Failed to fetch assignment: HTTP " + response.statusCode() + " " + response.body());
+        }
+        return objectMapper.readTree(response.body());
+    }
+
+
     private List<JsonNode> getPaginated(String url) throws IOException, InterruptedException {
         var result = new java.util.ArrayList<JsonNode>();
         String nextUrl = url;
@@ -170,6 +186,7 @@ public final class CanvasClient {
     }
 
     private static String toFormBody(Map<String, String> fields) {
+
         StringJoiner joiner = new StringJoiner("&");
         for (Map.Entry<String, String> e : fields.entrySet()) {
             String key = urlEncode(e.getKey());

@@ -559,10 +559,6 @@ public class CanvasRubricGuiApp extends Application {
 
 
     private void onDownloadTemplate() {
-        if (assignmentIdField.getText().trim().isEmpty()) {
-            showError("Error", "Please select an assignment first.");
-            return;
-        }
         String rubricTitle = titleField.getText().trim();
         if (rubricTitle.isEmpty()) {
             showError("Error", "Rubric title is required before downloading a template.");
@@ -592,11 +588,6 @@ public class CanvasRubricGuiApp extends Application {
     }
 
     private void onCopyTemplate() {
-
-        if (assignmentIdField.getText().trim().isEmpty()) {
-            showError("Error", "Please select an assignment first.");
-            return;
-        }
         String rubricTitle = titleField.getText().trim();
         if (rubricTitle.isEmpty()) {
             showError("Error", "Rubric title is required before copying a template.");

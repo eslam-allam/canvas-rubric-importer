@@ -181,6 +181,19 @@ class CanvasRubricGUI(tk.Tk):
             command=self.on_download_template,
         ).grid(row=4, column=2, **pad)
 
+        tk.Button(
+            bottom_frame,
+            text="Copy Template to Clipboard",
+            command=self.on_copy_template,
+        ).grid(row=5, column=2, **pad)
+
+
+        tk.Button(
+            bottom_frame,
+            text="Download CSV Template",
+            command=self.on_download_template,
+        ).grid(row=4, column=2, **pad)
+
 
 
         # Options
@@ -188,46 +201,53 @@ class CanvasRubricGUI(tk.Tk):
             bottom_frame,
             text="Free-form comments",
             variable=self.free_form_var,
-        ).grid(row=5, column=0, columnspan=2, sticky="w", **pad)
+        ).grid(row=6, column=0, columnspan=2, sticky="w", **pad)
+
 
 
         tk.Checkbutton(
             bottom_frame,
             text="Use for grading",
             variable=self.use_for_grading_var,
-        ).grid(row=6, column=0, columnspan=2, sticky="w", **pad)
+        ).grid(row=7, column=0, columnspan=2, sticky="w", **pad)
+
 
 
         tk.Checkbutton(
             bottom_frame,
             text="Hide score total",
             variable=self.hide_score_total_var,
-        ).grid(row=7, column=0, columnspan=2, sticky="w", **pad)
+        ).grid(row=8, column=0, columnspan=2, sticky="w", **pad)
+
 
 
         tk.Checkbutton(
             bottom_frame,
             text="Sync assignment points to rubric total",
             variable=self.sync_points_var,
-        ).grid(row=8, column=0, columnspan=3, sticky="w", **pad)
+        ).grid(row=9, column=0, columnspan=3, sticky="w", **pad)
+
 
 
         # Status + actions
         self.status_var = tk.StringVar(value="Idle")
         tk.Label(bottom_frame, textvariable=self.status_var, anchor="w", fg="blue").grid(
-            row=9, column=0, columnspan=3, sticky="we", **pad
+            row=10, column=0, columnspan=3, sticky="we", **pad
         )
 
         tk.Button(bottom_frame, text="Create Rubric", command=self.on_create).grid(
-            row=10, column=1, sticky="e", **pad
+            row=11, column=1, sticky="e", **pad
         )
         tk.Button(bottom_frame, text="Quit", command=self.destroy).grid(
-            row=10, column=2, sticky="w", **pad
+            row=11, column=2, sticky="w", **pad
         )
+
+
 
 
         for c in range(3):
             bottom_frame.grid_columnconfigure(c, weight=1)
+
 
     # ---------------- Canvas API helpers -----------------
     def _auth_headers(self) -> dict:
@@ -359,6 +379,19 @@ class CanvasRubricGUI(tk.Tk):
         if path:
             self.csv_path_var.set(path)
 
+    def _template_header(self) -> list[str]:
+        return [
+            "criterion",
+            "criterion_desc",
+            "points",
+            "rating1",
+            "rating1_points",
+            "rating1_desc",
+            "rating2",
+            "rating2_points",
+            "rating2_desc",
+        ]
+
     def on_download_template(self) -> None:
         if not self.assignment_id_var.get().strip():
             messagebox.showerror("Error", "Please select an assignment first.")
@@ -386,17 +419,7 @@ class CanvasRubricGUI(tk.Tk):
         if not path:
             return
 
-        header = [
-            "criterion",
-            "criterion_desc",
-            "points",
-            "rating1",
-            "rating1_points",
-            "rating1_desc",
-            "rating2",
-            "rating2_points",
-            "rating2_desc",
-        ]
+        header = self._template_header()
 
         import csv
 
@@ -410,6 +433,40 @@ class CanvasRubricGUI(tk.Tk):
             )
         except Exception as e:  # noqa: BLE001
             messagebox.showerror("Error", f"Could not save template: {e}")
+
+    def on_copy_template(self) -> None:
+        if not self.assignment_id_var.get().strip():
+            messagebox.showerror("Error", "Please select an assignment first.")
+            return
+
+        rubric_title = self.title_var.get().strip()
+        if not rubric_title:
+            messagebox.showerror(
+                "Error",
+                "Rubric title is required before copying a template.",
+            )
+            return
+
+        import io
+        import csv
+
+        header = self._template_header()
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow(header)
+        csv_text = buf.getvalue()
+
+        try:
+            self.clipboard_clear()
+            self.clipboard_append(csv_text)
+            self.update()  # ensure clipboard data is set
+            messagebox.showinfo(
+                "Template copied",
+                "Rubric CSV header template copied to clipboard.",
+            )
+        except Exception as e:  # noqa: BLE001
+            messagebox.showerror("Error", f"Could not copy template: {e}")
+
 
 
     def on_create(self) -> None:

@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.prefs.Preferences;
+
 
 public class CanvasRubricGuiApp extends Application {
 
@@ -46,16 +48,22 @@ public class CanvasRubricGuiApp extends Application {
     private ObservableList<JsonNode> courses = FXCollections.observableArrayList();
     private ObservableList<JsonNode> assignments = FXCollections.observableArrayList();
 
+    private final Preferences prefs = Preferences.userNodeForPackage(CanvasRubricGuiApp.class);
+
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Canvas Rubric Uploader");
 
         BorderPane root = new BorderPane();
+
         root.setPadding(new Insets(10));
 
         VBox topBox = new VBox(10);
         topBox.getChildren().add(buildConnectionPane());
         root.setTop(topBox);
+
+        loadSettings();
+
 
         SplitPane centerPane = new SplitPane();
         centerPane.getItems().add(buildCoursesPane());
@@ -78,9 +86,10 @@ public class CanvasRubricGuiApp extends Application {
         grid.setVgap(5);
 
         Label baseUrlLabel = new Label("Base URL:");
-        baseUrlField = new TextField("https://canvas.aubh.edu.bh");
+        baseUrlField = new TextField();
 
         Label tokenLabel = new Label("Access token:");
+
         tokenField = new PasswordField();
 
         Button saveButton = new Button("Save Settings");
@@ -223,9 +232,17 @@ public class CanvasRubricGuiApp extends Application {
     }
 
     private void onSaveSettings() {
-        // simple in-memory only for now; could be extended to persist in a file
-        showInfo("Saved", "Settings saved for this session.");
+        prefs.put("baseUrl", baseUrlField.getText().trim());
+        prefs.put("token", tokenField.getText());
+        showInfo("Saved", "Settings saved.");
     }
+
+    private void loadSettings() {
+        String defaultBase = "";
+        baseUrlField.setText(prefs.get("baseUrl", defaultBase));
+        tokenField.setText(prefs.get("token", ""));
+    }
+
 
     private void onLoadCourses() {
         String token = tokenField.getText().trim();

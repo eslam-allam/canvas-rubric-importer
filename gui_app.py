@@ -333,10 +333,11 @@ class CanvasRubricGUI(tk.Tk):
         aid = str(assignment["id"])
         self.assignment_id_var.set(aid)
 
-        # If rubric title is empty, prefill with assignment name
-        if not self.title_var.get().strip():
-            name = assignment.get("name") or aid
-            self.title_var.set(f"Rubric for {name}")
+        # Always (re)generate a default rubric title based on the selected assignment.
+        # If the user wants a completely custom title, they can edit it after selection.
+        name = assignment.get("name") or aid
+        self.title_var.set(f"Rubric for {name}")
+
 
     def browse_csv(self) -> None:
         path = filedialog.askopenfilename(

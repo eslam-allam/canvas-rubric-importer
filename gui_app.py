@@ -175,43 +175,56 @@ class CanvasRubricGUI(tk.Tk):
             row=3, column=2, **pad
         )
 
+        tk.Button(
+            bottom_frame,
+            text="Download CSV Template",
+            command=self.on_download_template,
+        ).grid(row=4, column=2, **pad)
+
+
+
         # Options
         tk.Checkbutton(
             bottom_frame,
             text="Free-form comments",
             variable=self.free_form_var,
-        ).grid(row=4, column=0, columnspan=2, sticky="w", **pad)
+        ).grid(row=5, column=0, columnspan=2, sticky="w", **pad)
+
 
         tk.Checkbutton(
             bottom_frame,
             text="Use for grading",
             variable=self.use_for_grading_var,
-        ).grid(row=5, column=0, columnspan=2, sticky="w", **pad)
+        ).grid(row=6, column=0, columnspan=2, sticky="w", **pad)
+
 
         tk.Checkbutton(
             bottom_frame,
             text="Hide score total",
             variable=self.hide_score_total_var,
-        ).grid(row=6, column=0, columnspan=2, sticky="w", **pad)
+        ).grid(row=7, column=0, columnspan=2, sticky="w", **pad)
+
 
         tk.Checkbutton(
             bottom_frame,
             text="Sync assignment points to rubric total",
             variable=self.sync_points_var,
-        ).grid(row=7, column=0, columnspan=3, sticky="w", **pad)
+        ).grid(row=8, column=0, columnspan=3, sticky="w", **pad)
+
 
         # Status + actions
         self.status_var = tk.StringVar(value="Idle")
         tk.Label(bottom_frame, textvariable=self.status_var, anchor="w", fg="blue").grid(
-            row=8, column=0, columnspan=3, sticky="we", **pad
+            row=9, column=0, columnspan=3, sticky="we", **pad
         )
 
         tk.Button(bottom_frame, text="Create Rubric", command=self.on_create).grid(
-            row=9, column=1, sticky="e", **pad
+            row=10, column=1, sticky="e", **pad
         )
         tk.Button(bottom_frame, text="Quit", command=self.destroy).grid(
-            row=9, column=2, sticky="w", **pad
+            row=10, column=2, sticky="w", **pad
         )
+
 
         for c in range(3):
             bottom_frame.grid_columnconfigure(c, weight=1)
@@ -345,6 +358,59 @@ class CanvasRubricGUI(tk.Tk):
         )
         if path:
             self.csv_path_var.set(path)
+
+    def on_download_template(self) -> None:
+        if not self.assignment_id_var.get().strip():
+            messagebox.showerror("Error", "Please select an assignment first.")
+            return
+
+        rubric_title = self.title_var.get().strip()
+        if not rubric_title:
+            messagebox.showerror(
+                "Error",
+                "Rubric title is required before downloading a template.",
+            )
+            return
+
+        # Derive a safe file name from the rubric title.
+        import re
+
+        safe_name = re.sub(r"[^A-Za-z0-9_.-]+", "_", rubric_title) or "rubric"
+
+        path = filedialog.asksaveasfilename(
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+            initialfile=f"{safe_name}.csv",
+        )
+
+        if not path:
+            return
+
+        header = [
+            "criterion",
+            "criterion_desc",
+            "points",
+            "rating1",
+            "rating1_points",
+            "rating1_desc",
+            "rating2",
+            "rating2_points",
+            "rating2_desc",
+        ]
+
+        import csv
+
+        try:
+            with open(path, "w", encoding="utf-8", newline="") as f:
+                writer = csv.writer(f)
+                writer.writerow(header)
+            messagebox.showinfo(
+                "Template saved",
+                f"Saved rubric CSV template to:\n{path}",
+            )
+        except Exception as e:  # noqa: BLE001
+            messagebox.showerror("Error", f"Could not save template: {e}")
+
 
     def on_create(self) -> None:
         if not self.token_var.get().strip():

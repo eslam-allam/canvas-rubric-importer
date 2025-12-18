@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Canvas Rubric Uploader
+Comment=Upload Canvas rubrics from CSV into Canvas assignments
+Exec=/opt/canvas-rubric-gui/canvas-rubric-gui
+Icon=canvas-rubric-gui
+Terminal=false
+Categories=Education;Utility;

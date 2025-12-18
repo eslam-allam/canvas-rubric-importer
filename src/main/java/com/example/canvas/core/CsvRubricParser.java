@@ -8,21 +8,30 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
+
+
 public final class CsvRubricParser {
 
     public record ParsedRubric(List<RubricModels.Criterion> criteria, double totalPoints) {}
 
     public ParsedRubric parse(Path csvPath) throws IOException {
-        try (BufferedReader reader = Files.newBufferedReader(csvPath, StandardCharsets.UTF_8)) {
-            var headerLine = reader.readLine();
-            if (headerLine == null) {
+        try (BufferedReader reader = Files.newBufferedReader(csvPath, StandardCharsets.UTF_8);
+             CSVParser parser = CSVFormat.DEFAULT
+                 .builder()
+                 .setHeader()
+                 .setSkipHeaderRecord(true)
+                 .setTrim(true)
+                 .build()
+                 .parse(reader)) {
+
+            List<String> headerList = parser.getHeaderNames();
+            if (headerList == null || headerList.isEmpty()) {
                 throw new IllegalArgumentException("CSV has no header row.");
             }
-
-            String[] headers = headerLine.split(",");
-            for (int i = 0; i < headers.length; i++) {
-                headers[i] = headers[i].trim();
-            }
+            String[] headers = headerList.toArray(String[]::new);
 
             int criterionIdx = indexOf(headers, "criterion");
             int pointsIdx = indexOf(headers, "points");
@@ -40,34 +49,29 @@ public final class CsvRubricParser {
 
             List<RubricModels.Criterion> criteria = new ArrayList<>();
             double total = 0.0;
-            String line;
             int rowNum = 1; // header is row 1
-            while ((line = reader.readLine()) != null) {
+            for (CSVRecord record : parser) {
                 rowNum++;
-                if (line.isBlank()) {
+                if (record.size() == 0) {
                     continue;
                 }
-                String[] cols = line.split(",");
-                if (cols.length != headers.length) {
-                    throw new IllegalArgumentException("Row " + rowNum + ": column count does not match header.");
-                }
 
-                String criterion = cols[criterionIdx].trim();
+                String criterion = record.get(criterionIdx).trim();
                 if (criterion.isEmpty()) {
                     throw new IllegalArgumentException("Row " + rowNum + ": empty criterion.");
                 }
 
-                String pointsRaw = cols[pointsIdx].trim();
+                String pointsRaw = record.get(pointsIdx).trim();
                 double points = parseDouble(pointsRaw, "Row " + rowNum + ": points must be numeric.");
                 total += points;
 
-                String desc = criterionDescIdx >= 0 ? cols[criterionDescIdx].trim() : "";
+                String desc = criterionDescIdx >= 0 ? record.get(criterionDescIdx).trim() : "";
 
                 List<RubricModels.Rating> ratings = new ArrayList<>();
                 for (RatingHeaderDetector.RatingGroup g : ratingGroups) {
-                    String name = getCol(cols, headers, g.nameColumn());
-                    String ptsRaw = getCol(cols, headers, g.pointsColumn());
-                    String longDesc = getCol(cols, headers, g.descColumn());
+                    String name = getField(record, headers, g.nameColumn());
+                    String ptsRaw = getField(record, headers, g.pointsColumn());
+                    String longDesc = getField(record, headers, g.descColumn());
 
                     if (name.isBlank() && ptsRaw.isBlank() && longDesc.isBlank()) {
                         continue;
@@ -93,6 +97,7 @@ public final class CsvRubricParser {
             return new ParsedRubric(criteria, total);
         }
     }
+
 
     private static void validateRatingPoints(int rowNum, double criterionPoints, List<RubricModels.Rating> ratings) {
         long zeros = ratings.stream().filter(r -> r.getPoints() == 0).count();
@@ -140,13 +145,14 @@ public final class CsvRubricParser {
         return -1;
     }
 
-    private static String getCol(String[] cols, String[] header, String columnName) {
+    private static String getField(CSVRecord record, String[] header, String columnName) {
         int idx = indexOf(header, columnName);
-        if (idx < 0 || idx >= cols.length) {
+        if (idx < 0 || idx >= record.size()) {
             return "";
         }
-        return cols[idx].trim();
+        return record.get(idx).trim();
     }
+
 
     private static double parseDouble(String value, String errorMessage) {
         try {

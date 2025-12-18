@@ -9,7 +9,15 @@ repositories {
 
 dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.18.0")
+    implementation("org.apache.commons:commons-csv:1.11.0")
+
+    // JavaFX dependencies for your platform
+    val javafxVersion = "25"
+    implementation("org.openjfx:javafx-base:$javafxVersion")
+    implementation("org.openjfx:javafx-controls:$javafxVersion")
+    implementation("org.openjfx:javafx-graphics:$javafxVersion")
 }
+
 
 java {
     toolchain {

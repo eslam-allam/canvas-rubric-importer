@@ -128,6 +128,30 @@ def read_rubric_csv(path: str) -> Tuple[List[Dict[str, Any]], float]:
             if len(ratings) < 2:
                 raise ValueError(f"Row {row_num}: need >=2 ratings.")
 
+            # Additional semantic validation for rating points:
+            # - No rating points may exceed the criterion points.
+            # - Exactly one rating must have 0 points.
+            # - Exactly one rating must have points equal to the criterion points.
+            points_list = [r["points"] for r in ratings]
+
+            if any(rp > pts for rp in points_list):
+                raise ValueError(
+                    f"Row {row_num}: rating points cannot exceed criterion points ({pts})."
+                )
+
+            zeros = sum(1 for rp in points_list if rp == 0)
+            maxes = sum(1 for rp in points_list if rp == pts)
+
+            if zeros != 1:
+                raise ValueError(
+                    f"Row {row_num}: there must be exactly one rating with 0 points (found {zeros})."
+                )
+            if maxes != 1:
+                raise ValueError(
+                    f"Row {row_num}: there must be exactly one rating with points equal to the criterion total ({pts}); found {maxes}."
+                )
+
+
             rows.append(
                 {
                     "criterion": crit,

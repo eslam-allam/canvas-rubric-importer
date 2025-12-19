@@ -47,11 +47,11 @@ public final class CsvRubricParser {
             String[] headers = headerList.toArray(String[]::new);
 
             int criterionIdx = indexOf(headers, "criterion");
-            int pointsIdx = indexOf(headers, "points");
             int criterionDescIdx = indexOf(headers, "criterion_desc");
-            if (criterionIdx < 0 || pointsIdx < 0) {
-                throw new IllegalArgumentException("CSV must contain 'criterion' and 'points' columns.");
+            if (criterionIdx < 0) {
+                throw new IllegalArgumentException("CSV must contain 'criterion' column.");
             }
+
 
             var ratingGroups = RatingHeaderDetector.detect(headers);
             if (ratingGroups.size() < 2) {
@@ -75,9 +75,6 @@ public final class CsvRubricParser {
                     throw new IllegalArgumentException("Row " + rowNum + ": empty criterion.");
                 }
 
-                String pointsRaw = record.get(pointsIdx).trim();
-                double points = parseDouble(pointsRaw, "Row " + rowNum + ": points must be numeric.");
-                total += points;
 
                 String desc = criterionDescIdx >= 0 ? normalizeText(record.get(criterionDescIdx).trim()) : "";
 
@@ -87,6 +84,7 @@ public final class CsvRubricParser {
                     String name = normalizeText(getField(record, headers, g.nameColumn()));
                     String ptsRaw = getField(record, headers, g.pointsColumn());
                     String longDesc = normalizeText(getField(record, headers, g.descColumn()));
+
 
 
                     if (name.isBlank() && ptsRaw.isBlank() && longDesc.isBlank()) {
@@ -105,37 +103,28 @@ public final class CsvRubricParser {
                     throw new IllegalArgumentException("Row " + rowNum + ": need >=2 ratings.");
                 }
 
-                validateRatingPoints(rowNum, points, ratings);
+                double criterionPoints = ratings.stream()
+                    .mapToDouble(RubricModels.Rating::getPoints)
+                    .max()
+                    .orElse(0.0);
 
-                criteria.add(new RubricModels.Criterion(criterion, desc, points, ratings));
+                criteria.add(new RubricModels.Criterion(criterion, desc, criterionPoints, ratings));
+                total += criterionPoints;
             }
 
             return new ParsedRubric(criteria, total);
+
         }
     }
 
 
-    private static void validateRatingPoints(int rowNum, double criterionPoints, List<RubricModels.Rating> ratings) {
-        long zeros = ratings.stream().filter(r -> r.getPoints() == 0).count();
-        long maxes = ratings.stream().filter(r -> r.getPoints() == criterionPoints).count();
-        boolean anyAbove = ratings.stream().anyMatch(r -> r.getPoints() > criterionPoints);
 
-        if (anyAbove) {
-            throw new IllegalArgumentException("Row " + rowNum + ": rating points cannot exceed criterion points (" + criterionPoints + ").");
-        }
-        if (zeros != 1) {
-            throw new IllegalArgumentException("Row " + rowNum + ": there must be exactly one rating with 0 points (found " + zeros + ").");
-        }
-        if (maxes != 1) {
-            throw new IllegalArgumentException("Row " + rowNum + ": there must be exactly one rating with points equal to the criterion total (" + criterionPoints + "); found " + maxes + ".");
-        }
-    }
 
     private static void validateNoExtraColumns(String[] headers, List<RatingHeaderDetector.RatingGroup> ratingGroups) {
         var allowed = new java.util.HashSet<String>();
         allowed.add("criterion");
         allowed.add("criterion_desc");
-        allowed.add("points");
+
         for (RatingHeaderDetector.RatingGroup g : ratingGroups) {
             allowed.add(g.nameColumn());
             allowed.add(g.pointsColumn());

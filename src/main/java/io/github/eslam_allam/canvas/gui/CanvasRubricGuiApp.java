@@ -442,6 +442,8 @@ public class CanvasRubricGuiApp extends Application {
 
         enableWrappingCellFactory(critCol);
         enableWrappingCellFactory(descCol);
+        enableWrappingCellFactory(pointsCol);
+
 
         java.util.List<TableColumn<RubricRow, String>> ratingCols = new java.util.ArrayList<>();
         for (int i = 0; i < maxRatings; i++) {
@@ -540,12 +542,18 @@ public class CanvasRubricGuiApp extends Application {
                         headerInitialized = true;
                     }
 
+                    double maxPoints = ratings.stream()
+                        .mapToDouble(RubricModels.Rating::getPoints)
+                        .max()
+                        .orElse(0.0);
+
                     rows.add(new RubricRow(
                         c.getName(),
                         c.getDescription(),
-                        Double.toString(c.getPoints()),
+                        Double.toString(maxPoints),
                         ratings
                     ));
+
                 }
 
                 final int finalMaxRatings = maxRatings;
@@ -576,7 +584,7 @@ public class CanvasRubricGuiApp extends Application {
         List<String> header = new ArrayList<>();
         header.add("criterion");
         header.add("criterion_desc");
-        header.add("points");
+
         for (int i = 1; i <= maxRatings; i++) {
             header.add("rating" + i);
             header.add("rating" + i + "_points");
@@ -701,13 +709,12 @@ public class CanvasRubricGuiApp extends Application {
                 for (JsonNode crit : rubric) {
                     String description = crit.path("description").asText("");
                     String longDesc = crit.path("long_description").asText("");
-                    String points = crit.path("points").asText("");
 
                     JsonNode ratings = crit.path("ratings");
                     List<String> row = new ArrayList<>();
                     row.add(description);
                     row.add(longDesc);
-                    row.add(points);
+
 
                     int count = ratings.isArray() ? ratings.size() : 0;
                     for (int i = 0; i < maxRatings; i++) {

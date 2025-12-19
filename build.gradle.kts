@@ -67,10 +67,22 @@ val mainClassName = "io.github.eslam_allam.canvas.MainApp"
 val jpackageOutputDir = layout.buildDirectory.dir("jpackage")
 val jlinkImageDir = layout.buildDirectory.dir("image")
 
+// Choose the platform-specific javafx-jmods directory
+fun javafxJmodsDirForCurrentOs(): String {
+    val os = org.gradle.internal.os.OperatingSystem.current()
+    val base = "javafx-jmods"
+    return when {
+        os.isWindows -> "$base/windows"
+        os.isLinux -> "$base/linux"
+        os.isMacOsX -> "$base/macos"
+        else -> base
+    }
+}
+
 // Build a custom runtime image using jlink and local jmods (javafx-jmods)
 tasks.register<org.gradle.api.tasks.Exec>("jlinkImage") {
     group = "distribution"
-    description = "Create custom runtime image with jlink using local javafx-jmods directory"
+    description = "Create custom runtime image with jlink using local, platform-specific javafx-jmods directory"
 
     dependsOn("jar")
 
@@ -83,7 +95,6 @@ tasks.register<org.gradle.api.tasks.Exec>("jlinkImage") {
         // Do not create the directory here; let jlink create it.
     }
 
-
     // Resolve all runtime dependencies (3rd-party libraries, not including the app JAR)
     val runtimeClasspath = configurations["runtimeClasspath"].resolve()
     val dependencyJars = runtimeClasspath.filter { !it.name.startsWith("${project.name}-") }
@@ -93,8 +104,9 @@ tasks.register<org.gradle.api.tasks.Exec>("jlinkImage") {
     val libsDir = layout.buildDirectory.dir("libs").get().asFile
     val appJar = File(libsDir, "${project.name}-${project.version}.jar")
 
-    // Compose full module-path: local jmods + all dependency jars + the app jar
-    val fullModulePath = listOf("javafx-jmods", depsOnPath, appJar.absolutePath)
+    // Compose full module-path: platform-specific javafx-jmods + all dependency jars + the app jar
+    val jmodsDir = javafxJmodsDirForCurrentOs()
+    val fullModulePath = listOf(jmodsDir, depsOnPath, appJar.absolutePath)
         .filter { it.isNotBlank() }
         .joinToString(File.pathSeparator)
 
@@ -110,6 +122,7 @@ tasks.register<org.gradle.api.tasks.Exec>("jlinkImage") {
         "--no-man-pages"
     )
 }
+
 
 
 // Build DEB (Linux) using jpackage and a custom runtime image from jlink

@@ -409,12 +409,10 @@ public class CanvasRubricGuiApp extends Application {
             showError("Error", "Please select a CSV file first.");
             return;
         }
-        if (showPreviewBtn != null) {
-            showPreviewBtn.setVisible(false);
-            showPreviewBtn.setManaged(false);
-        }
+        // Do not hide the preview button here; only hide it after preview loads successfully.
         loadRubricPreview(Path.of(path));
     }
+
 
 
     private void showMainView() {
@@ -559,11 +557,16 @@ public class CanvasRubricGuiApp extends Application {
                 final int finalMaxRatings = maxRatings;
                 final List<String> finalRatingHeaders = ratingHeaders;
                 Platform.runLater(() -> {
+                    if (showPreviewBtn != null) {
+                        showPreviewBtn.setVisible(false);
+                        showPreviewBtn.setManaged(false);
+                    }
                     rubricPreviewTable = buildRubricPreviewTable(finalMaxRatings, finalRatingHeaders);
                     rubricPreviewTable.getItems().setAll(rows);
                     root.setCenter(buildFullHeightPreviewPane());
                     setStatus("Preview loaded");
                 });
+
 
 
             } catch (Exception ex) {

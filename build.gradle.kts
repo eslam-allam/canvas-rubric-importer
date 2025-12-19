@@ -33,7 +33,6 @@ application {
 }
 
 
-
 tasks.register<JavaExec>("runCli") {
     group = "application"
     description = "Run the CLI application"
@@ -152,12 +151,18 @@ tasks.register<org.gradle.api.tasks.Exec>("packageDeb") {
         "--name", appName,
         "--app-version", appVersion,
         "--runtime-image", imageDir.absolutePath,
-        "--module", "io.github.eslam_allam.canvas/io.github.eslam_allam.canvas.MainApp",
+        "--module", "io.github.eslam_allam.canvas/io.github.eslam_allam.canvas.gui.CanvasRubricGuiLauncher",
         "--dest", debOutputDir.get().asFile.absolutePath,
         "--icon", "icons/canvas-rubric-gui.png",
-        "--vendor", "Canvas Rubric Importer"
+        "--vendor", "Canvas Rubric Importer",
+        "--linux-shortcut",
+        "--linux-menu-group", "Canvas Tools",
+        "--linux-deb-maintainer", "eslam allam <elamallam73@gmail.com>"
+
     )
 }
+
+
 
 // Build RPM (Linux) using jpackage and a custom runtime image from jlink
 val rpmOutputDir = jpackageOutputDir.map { it.dir("rpm") }
@@ -186,10 +191,13 @@ tasks.register<org.gradle.api.tasks.Exec>("packageRpm") {
         "--name", appName,
         "--app-version", appVersion,
         "--runtime-image", imageDir.absolutePath,
-        "--module", "io.github.eslam_allam.canvas/io.github.eslam_allam.canvas.MainApp",
+        "--module", "io.github.eslam_allam.canvas/io.github.eslam_allam.canvas.gui.CanvasRubricGuiLauncher",
         "--dest", rpmOutputDir.get().asFile.absolutePath,
         "--icon", "icons/canvas-rubric-gui.png",
-        "--vendor", "Canvas Rubric Importer"
+        "--vendor", "Canvas Rubric Importer",
+        "--linux-shortcut",
+        "--linux-menu-group", "Canvas Tools"
+
     )
 }
 

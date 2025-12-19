@@ -34,35 +34,36 @@ java {
 }
 
 application {
-    // Default entry point – CLI.
-    mainClass.set("io.github.eslam_allam.canvas.cli.CliApp")
+    // Unified entry point – decides between CLI and GUI.
+    mainClass.set("io.github.eslam_allam.canvas.MainApp")
 }
 
-// Convenience tasks to run CLI and GUI explicitly via the existing 'run' task
 
-tasks.register("runCli") {
+tasks.register<JavaExec>("runCli") {
     group = "application"
     description = "Run the CLI application"
-    doFirst {
-        application {
-            mainClass.set("io.github.eslam_allam.canvas.cli.CliApp")
-        }
-    }
-    finalizedBy(tasks.named("run"))
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("io.github.eslam_allam.canvas.MainApp")
+    args("--cli")
 }
 
-tasks.register("runGui") {
+tasks.register<JavaExec>("runGui") {
     group = "application"
     description = "Run the JavaFX GUI application"
-    doFirst {
-        application {
-            mainClass.set("io.github.eslam_allam.canvas.gui.CanvasRubricGuiApp")
-        }
-    }
-    finalizedBy(tasks.named("run"))
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("io.github.eslam_allam.canvas.MainApp")
+    args("--gui")
 }
 
-// ---------------- jlink + jpackage packaging tasks ----------------
+
+
+tasks.jar {
+    manifest {
+        attributes(
+            "Main-Class" to "io.github.eslam_allam.canvas.MainApp"
+        )
+    }
+}
 
 val appName = "CanvasRubricImporter"
 val appVersion = (project.version.takeIf { it != "unspecified" } ?: "1.0.0").toString()
@@ -70,6 +71,7 @@ val mainClassName = "io.github.eslam_allam.canvas.gui.CanvasRubricGuiApp"
 
 val jlinkImageDir = layout.buildDirectory.dir("jlink-image")
 val jpackageOutputDir = layout.buildDirectory.dir("jpackage")
+
 
 // Create custom runtime image using jlink
 tasks.register<org.gradle.api.tasks.Exec>("jlinkImage") {

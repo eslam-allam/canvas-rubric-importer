@@ -220,8 +220,12 @@ tasks.register<org.gradle.api.tasks.Exec>("packageMsi") {
         "--name", appName,
         "--app-version", appVersion,
         "--runtime-image", imageDir.absolutePath,
-        "--module", "io.github.eslam_allam.canvas/io.github.eslam_allam.canvas.MainApp",
+        // Windows: always launch GUI via dedicated launcher
+        "--module", "io.github.eslam_allam.canvas/io.github.eslam_allam.canvas.gui.CanvasRubricGuiLauncher",
         "--dest", msiOutputDir.get().asFile.absolutePath,
-        "--vendor", "Canvas Rubric Importer"
+        "--vendor", "Canvas Rubric Importer",
+        "--win-shortcut",
+        "--win-menu",
+        "--win-menu-group", "Canvas Tools"
     )
 }

@@ -113,6 +113,8 @@ tasks.register<org.gradle.api.tasks.Exec>("jlinkImage") {
 
 
 // Build DEB (Linux) using jpackage and a custom runtime image from jlink
+val debOutputDir = jpackageOutputDir.map { it.dir("deb") }
+
 tasks.register<org.gradle.api.tasks.Exec>("packageDeb") {
     dependsOn("jlinkImage")
 
@@ -122,10 +124,15 @@ tasks.register<org.gradle.api.tasks.Exec>("packageDeb") {
     dependsOn("jar")
 
     doFirst {
-        jpackageOutputDir.get().asFile.mkdirs()
+        val outDir = debOutputDir.get().asFile
+        if (outDir.exists()) {
+            outDir.deleteRecursively()
+        }
+        outDir.mkdirs()
     }
 
     val imageDir = jlinkImageDir.get().asFile
+
     commandLine(
         "jpackage",
         "--type", "deb",
@@ -133,61 +140,75 @@ tasks.register<org.gradle.api.tasks.Exec>("packageDeb") {
         "--app-version", appVersion,
         "--runtime-image", imageDir.absolutePath,
         "--module", "io.github.eslam_allam.canvas/io.github.eslam_allam.canvas.MainApp",
-        "--dest", jpackageOutputDir.get().asFile.absolutePath,
+        "--dest", debOutputDir.get().asFile.absolutePath,
         "--icon", "icons/canvas-rubric-gui.png",
         "--vendor", "Canvas Rubric Importer"
     )
 }
 
-// Build RPM (Linux) using jpackage and the default runtime
+// Build RPM (Linux) using jpackage and a custom runtime image from jlink
+val rpmOutputDir = jpackageOutputDir.map { it.dir("rpm") }
+
 tasks.register<org.gradle.api.tasks.Exec>("packageRpm") {
+    dependsOn("jlinkImage")
+
     group = "distribution"
     description = "Build RPM installer using jpackage (run on Linux)."
 
     dependsOn("jar")
 
     doFirst {
-        jpackageOutputDir.get().asFile.mkdirs()
+        val outDir = rpmOutputDir.get().asFile
+        if (outDir.exists()) {
+            outDir.deleteRecursively()
+        }
+        outDir.mkdirs()
     }
 
-    val libsDir = layout.buildDirectory.dir("libs").get().asFile
+    val imageDir = jlinkImageDir.get().asFile
+
     commandLine(
         "jpackage",
         "--type", "rpm",
         "--name", appName,
         "--app-version", appVersion,
-        "--input", libsDir.absolutePath,
-        "--main-jar", "${project.name}-${project.version}.jar",
-        "--main-class", mainClassName,
-        "--dest", jpackageOutputDir.get().asFile.absolutePath,
+        "--runtime-image", imageDir.absolutePath,
+        "--module", "io.github.eslam_allam.canvas/io.github.eslam_allam.canvas.MainApp",
+        "--dest", rpmOutputDir.get().asFile.absolutePath,
         "--icon", "icons/canvas-rubric-gui.png",
         "--vendor", "Canvas Rubric Importer"
     )
 }
 
-// Build MSI (Windows) using jpackage and the default runtime
+// Build MSI (Windows) using jpackage and a custom runtime image from jlink
+val msiOutputDir = jpackageOutputDir.map { it.dir("msi") }
+
 tasks.register<org.gradle.api.tasks.Exec>("packageMsi") {
+    dependsOn("jlinkImage")
+
     group = "distribution"
     description = "Build MSI installer using jpackage (run on Windows)."
 
     dependsOn("jar")
 
     doFirst {
-        jpackageOutputDir.get().asFile.mkdirs()
+        val outDir = msiOutputDir.get().asFile
+        if (outDir.exists()) {
+            outDir.deleteRecursively()
+        }
+        outDir.mkdirs()
     }
 
-    val libsDir = layout.buildDirectory.dir("libs").get().asFile
+    val imageDir = jlinkImageDir.get().asFile
+
     commandLine(
         "jpackage",
         "--type", "msi",
         "--name", appName,
         "--app-version", appVersion,
-        "--input", libsDir.absolutePath,
-        "--main-jar", "${project.name}-${project.version}.jar",
-        "--main-class", mainClassName,
-        "--dest", jpackageOutputDir.get().asFile.absolutePath,
+        "--runtime-image", imageDir.absolutePath,
+        "--module", "io.github.eslam_allam.canvas/io.github.eslam_allam.canvas.MainApp",
+        "--dest", msiOutputDir.get().asFile.absolutePath,
         "--vendor", "Canvas Rubric Importer"
     )
 }
-
-

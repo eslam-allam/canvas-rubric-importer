@@ -19,12 +19,6 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.18.0")
     implementation("org.apache.commons:commons-csv:1.11.0")
     implementation("org.apache.commons:commons-text:1.12.0")
-
-    // JavaFX dependencies for your platform
-    val javafxVersion = "25"
-    implementation("org.openjfx:javafx-base:$javafxVersion")
-    implementation("org.openjfx:javafx-controls:$javafxVersion")
-    implementation("org.openjfx:javafx-graphics:$javafxVersion")
 }
 
 java {
@@ -34,9 +28,10 @@ java {
 }
 
 application {
-    // Unified entry point – decides between CLI and GUI.
-    mainClass.set("io.github.eslam_allam.canvas.MainApp")
+    // Modular application: specify module/name instead of only the main class
+    mainModule.set("io.github.eslam_allam.canvas/io.github.eslam_allam.canvas.MainApp")
 }
+
 
 
 tasks.register<JavaExec>("runCli") {
@@ -67,85 +62,89 @@ tasks.jar {
 
 val appName = "CanvasRubricImporter"
 val appVersion = (project.version.takeIf { it != "unspecified" } ?: "1.0.0").toString()
-val mainClassName = "io.github.eslam_allam.canvas.gui.CanvasRubricGuiApp"
+val mainClassName = "io.github.eslam_allam.canvas.MainApp"
 
-val jlinkImageDir = layout.buildDirectory.dir("jlink-image")
 val jpackageOutputDir = layout.buildDirectory.dir("jpackage")
+val jlinkImageDir = layout.buildDirectory.dir("image")
 
-
-// Create custom runtime image using jlink
+// Build a custom runtime image using jlink and local jmods (javafx-jmods)
 tasks.register<org.gradle.api.tasks.Exec>("jlinkImage") {
     group = "distribution"
-    description = "Create custom runtime image using jlink."
+    description = "Create custom runtime image with jlink using local javafx-jmods directory"
 
     dependsOn("jar")
 
-    val imageDir = jlinkImageDir.get().asFile
-
     doFirst {
-        if (imageDir.exists()) {
-            imageDir.deleteRecursively()
+        // jlink requires that the output directory must NOT exist before running
+        val imageDirFile = jlinkImageDir.get().asFile
+        if (imageDirFile.exists()) {
+            imageDirFile.deleteRecursively()
         }
+        // Do not create the directory here; let jlink create it.
     }
 
-    // Base modules you need; add/remove as required by your app
-    val modules = listOf(
-        "java.base",
-        "java.logging",
-        "java.xml",
-        "jdk.crypto.ec",
-        "jdk.unsupported",
-        "java.desktop" // often needed by JavaFX host environment
-    )
 
-    val javaHome = System.getProperty("java.home")
-    val jmodsDir = file("$javaHome/jmods")
+    // Resolve all runtime dependencies (3rd-party libraries, not including the app JAR)
+    val runtimeClasspath = configurations["runtimeClasspath"].resolve()
+    val dependencyJars = runtimeClasspath.filter { !it.name.startsWith("${project.name}-") }
+    val depsOnPath = dependencyJars.joinToString(File.pathSeparator) { it.absolutePath }
 
+    // The application jar, which contains the named module io.github.eslam_allam.canvas
+    val libsDir = layout.buildDirectory.dir("libs").get().asFile
+    val appJar = File(libsDir, "${project.name}-${project.version}.jar")
+
+    // Compose full module-path: local jmods + all dependency jars + the app jar
+    val fullModulePath = listOf("javafx-jmods", depsOnPath, appJar.absolutePath)
+        .filter { it.isNotBlank() }
+        .joinToString(File.pathSeparator)
+
+    // Use local jmods directory plus all runtime jars and the app jar on the module path
     commandLine(
         "jlink",
-        "--module-path", jmodsDir.absolutePath,
-        "--no-header-files",
-        "--no-man-pages",
+        "--module-path", fullModulePath,
+        "--add-modules", "io.github.eslam_allam.canvas",
+        "--output", jlinkImageDir.get().asFile.absolutePath,
         "--strip-debug",
         "--compress", "2",
-        "--add-modules", modules.joinToString(","),
-        "--output", imageDir.absolutePath
+        "--no-header-files",
+        "--no-man-pages"
     )
 }
 
-// Build DEB (Linux) using the custom runtime image
-tasks.register<org.gradle.api.tasks.Exec>("packageDeb") {
-    group = "distribution"
-    description = "Build DEB installer using jpackage with jlink image (run on Linux)."
 
+// Build DEB (Linux) using jpackage and a custom runtime image from jlink
+tasks.register<org.gradle.api.tasks.Exec>("packageDeb") {
     dependsOn("jlinkImage")
+
+    group = "distribution"
+    description = "Build DEB installer using jpackage (run on Linux)."
+
+    dependsOn("jar")
 
     doFirst {
         jpackageOutputDir.get().asFile.mkdirs()
     }
 
-    val libsDir = layout.buildDirectory.dir("libs").get().asFile
+    val imageDir = jlinkImageDir.get().asFile
     commandLine(
         "jpackage",
         "--type", "deb",
         "--name", appName,
         "--app-version", appVersion,
-        "--input", libsDir.absolutePath,
-        "--main-jar", "${project.name}-${project.version}.jar",
-        "--main-class", mainClassName,
-        "--runtime-image", jlinkImageDir.get().asFile.absolutePath,
+        "--runtime-image", imageDir.absolutePath,
+        "--module", "io.github.eslam_allam.canvas/io.github.eslam_allam.canvas.MainApp",
         "--dest", jpackageOutputDir.get().asFile.absolutePath,
         "--icon", "icons/canvas-rubric-gui.png",
         "--vendor", "Canvas Rubric Importer"
     )
 }
 
-// Build RPM (Linux) using the custom runtime image
+// Build RPM (Linux) using jpackage and the default runtime
 tasks.register<org.gradle.api.tasks.Exec>("packageRpm") {
     group = "distribution"
-    description = "Build RPM installer using jpackage with jlink image (run on Linux)."
+    description = "Build RPM installer using jpackage (run on Linux)."
 
-    dependsOn("jlinkImage")
+    dependsOn("jar")
 
     doFirst {
         jpackageOutputDir.get().asFile.mkdirs()
@@ -160,19 +159,18 @@ tasks.register<org.gradle.api.tasks.Exec>("packageRpm") {
         "--input", libsDir.absolutePath,
         "--main-jar", "${project.name}-${project.version}.jar",
         "--main-class", mainClassName,
-        "--runtime-image", jlinkImageDir.get().asFile.absolutePath,
         "--dest", jpackageOutputDir.get().asFile.absolutePath,
         "--icon", "icons/canvas-rubric-gui.png",
         "--vendor", "Canvas Rubric Importer"
     )
 }
 
-// Build MSI (Windows) using the custom runtime image
+// Build MSI (Windows) using jpackage and the default runtime
 tasks.register<org.gradle.api.tasks.Exec>("packageMsi") {
     group = "distribution"
-    description = "Build MSI installer using jpackage with jlink image (run on Windows)."
+    description = "Build MSI installer using jpackage (run on Windows)."
 
-    dependsOn("jlinkImage")
+    dependsOn("jar")
 
     doFirst {
         jpackageOutputDir.get().asFile.mkdirs()
@@ -187,9 +185,9 @@ tasks.register<org.gradle.api.tasks.Exec>("packageMsi") {
         "--input", libsDir.absolutePath,
         "--main-jar", "${project.name}-${project.version}.jar",
         "--main-class", mainClassName,
-        "--runtime-image", jlinkImageDir.get().asFile.absolutePath,
         "--dest", jpackageOutputDir.get().asFile.absolutePath,
         "--vendor", "Canvas Rubric Importer"
     )
 }
+
 

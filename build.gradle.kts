@@ -153,8 +153,9 @@ tasks.register<org.gradle.api.tasks.Exec>("packageDeb") {
         "--runtime-image", imageDir.absolutePath,
         "--module", "io.github.eslam_allam.canvas/io.github.eslam_allam.canvas.gui.CanvasRubricGuiLauncher",
         "--dest", debOutputDir.get().asFile.absolutePath,
-        "--icon", "icons/canvas-rubric-gui.png",
+        "--icon", "icons/png/canvas_rubric_importer 128x128.png",
         "--vendor", "Canvas Rubric Importer",
+
         "--linux-shortcut",
         "--linux-menu-group", "Canvas Tools",
         "--linux-deb-maintainer", "eslam allam <elamallam73@gmail.com>"
@@ -193,8 +194,9 @@ tasks.register<org.gradle.api.tasks.Exec>("packageRpm") {
         "--runtime-image", imageDir.absolutePath,
         "--module", "io.github.eslam_allam.canvas/io.github.eslam_allam.canvas.gui.CanvasRubricGuiLauncher",
         "--dest", rpmOutputDir.get().asFile.absolutePath,
-        "--icon", "icons/canvas-rubric-gui.png",
+        "--icon", "icons/png/canvas_rubric_importer 128x128.png",
         "--vendor", "Canvas Rubric Importer",
+
         "--linux-shortcut",
         "--linux-menu-group", "Canvas Tools"
 
@@ -231,9 +233,11 @@ tasks.register<org.gradle.api.tasks.Exec>("packageMsi") {
         // Windows: always launch GUI via dedicated launcher
         "--module", "io.github.eslam_allam.canvas/io.github.eslam_allam.canvas.gui.CanvasRubricGuiLauncher",
         "--dest", msiOutputDir.get().asFile.absolutePath,
+        "--icon", "icons/canvas_rubric_importer.ico",
         "--vendor", "Canvas Rubric Importer",
         "--win-shortcut",
         "--win-menu",
         "--win-menu-group", "Canvas Tools"
     )
 }
+

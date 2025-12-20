@@ -1,0 +1,108 @@
+name: Publish AUR Package
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  update-aur:
+    runs-on: ubuntu-latest
+
+    env:
+      AUR_REPO: "ssh://aur@aur.archlinux.org/canvas-rubric-importer.git"
+      PKG_NAME: "canvas-rubric-importer"
+
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          # Expect tag like v1.0.3
+          TAG="${GITHUB_REF##*/}"
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Print version
+        run: |
+          echo "Tag: ${{ steps.version.outputs.tag }}"
+          echo "Version: ${{ steps.version.outputs.version }}"
+
+      - name: Prepare SSH for AUR
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.AUR_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          touch ~/.ssh/known_hosts
+          ssh-keyscan -t rsa aur.archlinux.org >> ~/.ssh/known_hosts
+
+      - name: Install Arch packaging tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git jq curl base-devel
+
+      - name: Clone AUR repo
+        run: |
+          git -c init.defaultBranch=master clone "$AUR_REPO" aur-repo
+          cd aur-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+
+      - name: Download new release artifact and compute checksum
+        id: checksum
+        run: |
+          set -e
+          VERSION="${{ steps.version.outputs.version }}"
+          FILE="canvasrubricimporter_${VERSION}_amd64.deb"
+          URL="https://github.com/eslam-allam/canvas-rubric-importer/releases/download/v${VERSION}/${FILE}"
+
+          echo "Downloading $URL"
+          HTTP_STATUS=$(curl -L -w '%{http_code}' -o "$FILE" "$URL")
+
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "Artifact not found or download failed (HTTP $HTTP_STATUS)." >&2
+            exit 1
+          fi
+
+          if [ ! -s "$FILE" ]; then
+            echo "Downloaded file is empty or missing: $FILE" >&2
+            exit 1
+          fi
+
+          SHA256=$(sha256sum "$FILE" | awk '{print $1}')
+          echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
+
+      - name: Update PKGBUILD
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          SHA256="${{ steps.checksum.outputs.sha256 }}"
+
+          cd aur-repo
+
+          # Update pkgver
+          sed -i "s/^pkgver=.*/pkgver=${VERSION}/" PKGBUILD
+
+          # Update sha256sums
+          sed -i "s/^sha256sums=('.*')/sha256sums=('${SHA256}')/" PKGBUILD
+
+          echo "Updated PKGBUILD:"
+          grep -E '^(pkgver|sha256sums)' PKGBUILD
+
+      - name: Regenerate .SRCINFO
+        run: |
+          cd aur-repo
+          makepkg --printsrcinfo > .SRCINFO
+
+      - name: Commit and push to AUR
+        run: |
+          cd aur-repo
+          if git diff --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git add PKGBUILD .SRCINFO
+          git commit -m "Update to ${{ steps.version.outputs.version }}"
+          git push origin HEAD:master

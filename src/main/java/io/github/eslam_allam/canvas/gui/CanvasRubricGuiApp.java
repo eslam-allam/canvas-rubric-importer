@@ -234,10 +234,11 @@ public class CanvasRubricGuiApp extends Application {
         Button browseBtn = new Button("Browse...");
         browseBtn.setOnAction(e -> onBrowseCsv());
 
+        Button pasteCsvFromClipboardBtn = new Button("Paste CSV from Clipboard");
+        pasteCsvFromClipboardBtn.setOnAction(e -> onPasteCsvFromClipboard());
+
         showPreviewBtn = new Button("Show Preview");
         showPreviewBtn.setOnAction(e -> showPreviewFullHeight());
-
-
 
         Button downloadTemplateBtn = new Button("Download CSV Template");
         downloadTemplateBtn.setOnAction(e -> onDownloadTemplate());
@@ -248,7 +249,9 @@ public class CanvasRubricGuiApp extends Application {
         Button downloadRubricBtn = new Button("Download Rubric as CSV");
         downloadRubricBtn.setOnAction(e -> onDownloadRubricCsv());
 
+
         Button createBtn = new Button("Create Rubric");
+
         createBtn.setOnAction(e -> onCreate());
 
 
@@ -271,13 +274,16 @@ public class CanvasRubricGuiApp extends Application {
 
         grid.add(new Label("CSV File:"), 0, row);
         grid.add(csvPathField, 1, row);
-        grid.add(browseBtn, 2, row);
-        grid.add(showPreviewBtn, 3, row++);
+
+        HBox csvButtons = new HBox(5, browseBtn, pasteCsvFromClipboardBtn, showPreviewBtn);
+        grid.add(csvButtons, 2, row++);
 
 
         grid.add(downloadTemplateBtn, 2, row++);
         grid.add(copyTemplateBtn, 2, row++);
         grid.add(downloadRubricBtn, 2, row++);
+
+
 
 
         grid.add(freeFormCommentsCheck, 0, row++, 2, 1);
@@ -651,7 +657,89 @@ public class CanvasRubricGuiApp extends Application {
         showInfo("Template copied", "Rubric CSV header template copied to clipboard.");
     }
 
+    private void onPasteCsvFromClipboard() {
+        String csvText = Clipboard.getSystemClipboard().getString();
+        if (csvText == null || csvText.trim().isEmpty()) {
+            showError("Error", "Clipboard does not contain any text.");
+            return;
+        }
+
+        // Normalize newlines
+        csvText = csvText.replace("\r\n", "\n").replace("\r", "\n");
+        String[] lines = csvText.split("\n");
+        if (lines.length < 2) {
+            showError("Error", "Clipboard CSV must include a header row and at least one data row.");
+            return;
+        }
+
+        java.util.List<String> headerCells;
+        try {
+            java.io.StringReader sr = new java.io.StringReader(csvText);
+            try (org.apache.commons.csv.CSVParser parser = org.apache.commons.csv.CSVFormat.DEFAULT
+                     .builder()
+                     .setHeader()
+                     .setSkipHeaderRecord(true)
+                     .setTrim(true)
+                     .build()
+                     .parse(sr)) {
+                headerCells = parser.getHeaderNames();
+            }
+        } catch (IOException ex) {
+            showError("Error", "Failed to parse clipboard CSV header: " + ex.getMessage());
+            return;
+        }
+
+        if (headerCells == null || headerCells.isEmpty()) {
+            showError("Error", "Clipboard CSV has an empty header row.");
+            return;
+        }
+
+        String[] headerArray = headerCells.toArray(String[]::new);
+
+        // Reuse RatingHeaderDetector to validate rating groups
+        java.util.List<io.github.eslam_allam.canvas.core.RatingHeaderDetector.RatingGroup> ratingGroups =
+            io.github.eslam_allam.canvas.core.RatingHeaderDetector.detect(headerArray);
+
+        if (ratingGroups.size() < 2) {
+            showError("Error", "Clipboard CSV must have at least rating1/rating1_points/rating1_desc and rating2/rating2_points/rating2_desc columns.");
+            return;
+        }
+
+        // Ensure no unexpected extra columns, mirroring CsvRubricParser.validateNoExtraColumns behavior
+        java.util.Set<String> allowed = new java.util.HashSet<>();
+        allowed.add("criterion");
+        allowed.add("criterion_desc");
+        for (io.github.eslam_allam.canvas.core.RatingHeaderDetector.RatingGroup g : ratingGroups) {
+            allowed.add(g.nameColumn());
+            allowed.add(g.pointsColumn());
+            allowed.add(g.descColumn());
+        }
+
+        java.util.List<String> extra = new java.util.ArrayList<>();
+        for (String h : headerArray) {
+            if (!allowed.contains(h)) {
+                extra.add(h);
+            }
+        }
+        if (!extra.isEmpty()) {
+            showError("Error", "Unexpected column(s) in clipboard CSV header: " + String.join(", ", extra));
+            return;
+        }
+
+        try {
+            java.nio.file.Path tempFile = java.nio.file.Files.createTempFile("canvas_rubric_", ".csv");
+            java.nio.file.Files.writeString(tempFile, csvText, java.nio.charset.StandardCharsets.UTF_8);
+            csvPathField.setText(tempFile.toAbsolutePath().toString());
+            showInfo("Clipboard CSV saved", "Saved clipboard rubric CSV to temporary file:\n" + tempFile.toAbsolutePath());
+        } catch (IOException ex) {
+            showError("Error", "Failed to save clipboard CSV to temporary file: " + ex.getMessage());
+        }
+    }
+
     private void onDownloadRubricCsv() {
+
+
+
         String token = tokenField.getText().trim();
         if (token.isEmpty()) {
             showError("Error", "You must enter an access token first.");

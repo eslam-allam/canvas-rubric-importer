@@ -38,12 +38,6 @@ jobs:
           touch ~/.ssh/known_hosts
           ssh-keyscan -t rsa aur.archlinux.org >> ~/.ssh/known_hosts
 
-      - name: Install tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y git jq curl pacman-contrib
-
-
       - name: Clone AUR repo
         run: |
           git -c init.defaultBranch=master clone "$AUR_REPO" aur-repo
@@ -93,9 +87,11 @@ jobs:
           grep -E '^(pkgver|sha256sums)' PKGBUILD
 
       - name: Regenerate .SRCINFO
-        run: |
-          cd aur-repo
-          mksrcinfo > .SRCINFO
+        uses: heyhusen/archlinux-package-action@v2
+        with:
+          flags: ''
+          namcap: false
+          srcinfo: true
 
 
       - name: Commit and push to AUR

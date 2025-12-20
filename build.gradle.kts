@@ -1,6 +1,7 @@
 plugins {
     id("application")
     id("org.openjfx.javafxplugin") version "0.1.0"
+    id("com.diffplug.spotless") version "8.1.0"
 }
 
 group = "io.github.eslam_allam.canvas"
@@ -10,7 +11,28 @@ repositories {
     mavenCentral()
 }
 
+spotless {
+
+    format("misc") {
+        // define the files to apply `misc` to
+        target("*.gradle.*", ".gitattributes", ".gitignore")
+
+        // define the steps to apply to those files
+        trimTrailingWhitespace()
+        leadingTabsToSpaces()
+        endWithNewline()
+    }
+
+    java {
+        // apply a specific flavor of google-java-format
+        googleJavaFormat().aosp().reflowLongStrings().skipJavadocFormatting()
+        // fix formatting of type annotations
+        formatAnnotations()
+    }
+}
+
 javafx {
+
     version = "25"
     modules = listOf("javafx.controls", "javafx.graphics", "javafx.base")
 }
@@ -240,4 +262,3 @@ tasks.register<org.gradle.api.tasks.Exec>("packageMsi") {
         "--win-menu-group", "Canvas Tools"
     )
 }
-

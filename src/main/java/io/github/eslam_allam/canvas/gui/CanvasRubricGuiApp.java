@@ -221,6 +221,7 @@ public class CanvasRubricGuiApp extends Application {
         csvPathField = new TextField();
 
 
+
         freeFormCommentsCheck = new CheckBox("Free-form comments");
         freeFormCommentsCheck.setSelected(true);
         useForGradingCheck = new CheckBox("Use for grading");
@@ -239,6 +240,9 @@ public class CanvasRubricGuiApp extends Application {
 
         showPreviewBtn = new Button("Show Preview");
         showPreviewBtn.setOnAction(e -> showPreviewFullHeight());
+        showPreviewBtn.setVisible(false);
+        showPreviewBtn.setManaged(false);
+
 
         Button downloadTemplateBtn = new Button("Download CSV Template");
         downloadTemplateBtn.setOnAction(e -> onDownloadTemplate());
@@ -278,8 +282,15 @@ public class CanvasRubricGuiApp extends Application {
         HBox csvButtons = new HBox(5, browseBtn, pasteCsvFromClipboardBtn, showPreviewBtn);
         grid.add(csvButtons, 2, row++);
 
+        csvPathField.textProperty().addListener((obs, oldVal, newVal) -> {
+            boolean hasCsv = newVal != null && !newVal.trim().isEmpty() && newVal.trim().toLowerCase().endsWith(".csv");
+            showPreviewBtn.setVisible(hasCsv);
+            showPreviewBtn.setManaged(hasCsv);
+        });
+
 
         grid.add(downloadTemplateBtn, 2, row++);
+
         grid.add(copyTemplateBtn, 2, row++);
         grid.add(downloadRubricBtn, 2, row++);
 

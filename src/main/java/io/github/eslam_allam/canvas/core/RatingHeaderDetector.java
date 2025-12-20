@@ -21,7 +21,7 @@ public final class RatingHeaderDetector {
             Matcher m = RATING_NAME_PATTERN.matcher(col);
             if (m.matches()) {
                 int index = Integer.parseInt(m.group(1));
-                ratingNameCols.add(new int[]{index, i});
+                ratingNameCols.add(new int[] {index, i});
             }
         }
         ratingNameCols.sort(Comparator.comparingInt(a -> a[0]));

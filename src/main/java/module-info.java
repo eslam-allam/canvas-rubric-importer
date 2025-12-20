@@ -17,17 +17,10 @@ module io.github.eslam_allam.canvas {
     requires org.apache.commons.csv;
     requires org.apache.commons.text;
 
-
-
-
-
-
     // JDK modules
     requires java.net.http;
     requires java.prefs;
 
-
     // Allow JavaFX / reflection to access GUI internals
     opens io.github.eslam_allam.canvas.gui;
-
 }

@@ -18,9 +18,17 @@ public final class RubricModels {
             this.longDescription = longDescription;
         }
 
-        public String getDescription() { return description; }
-        public double getPoints() { return points; }
-        public String getLongDescription() { return longDescription; }
+        public String getDescription() {
+            return description;
+        }
+
+        public double getPoints() {
+            return points;
+        }
+
+        public String getLongDescription() {
+            return longDescription;
+        }
     }
 
     public static final class Criterion {
@@ -36,10 +44,21 @@ public final class RubricModels {
             this.ratings = new ArrayList<>(ratings);
         }
 
-        public String getName() { return name; }
-        public String getDescription() { return description; }
-        public double getPoints() { return points; }
-        public List<Rating> getRatings() { return new ArrayList<>(ratings); }
+        public String getName() {
+            return name;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public double getPoints() {
+            return points;
+        }
+
+        public List<Rating> getRatings() {
+            return new ArrayList<>(ratings);
+        }
     }
 
     public static final class Rubric {
@@ -51,8 +70,13 @@ public final class RubricModels {
             this.criteria = new ArrayList<>(criteria);
         }
 
-        public String getTitle() { return title; }
-        public List<Criterion> getCriteria() { return new ArrayList<>(criteria); }
+        public String getTitle() {
+            return title;
+        }
+
+        public List<Criterion> getCriteria() {
+            return new ArrayList<>(criteria);
+        }
 
         public double getTotalPoints() {
             return criteria.stream().mapToDouble(Criterion::getPoints).sum();

@@ -1,20 +1,19 @@
 package io.github.eslam_allam.canvas.core;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public final class CanvasClient {
 
@@ -30,43 +29,50 @@ public final class CanvasClient {
         this.objectMapper = new ObjectMapper();
     }
 
-    public void updateAssignmentPoints(String courseId, String assignmentId, double points) throws IOException, InterruptedException {
-        String url = String.format("%s/api/v1/courses/%s/assignments/%s", baseUrl, courseId, assignmentId);
-        Map<String, Object> payload = Map.of(
-            "assignment", Map.of(
-                "points_possible", points,
-                "grading_type", "points"
-            )
-        );
+    public void updateAssignmentPoints(String courseId, String assignmentId, double points)
+            throws IOException, InterruptedException {
+        String url =
+                String.format(
+                        "%s/api/v1/courses/%s/assignments/%s", baseUrl, courseId, assignmentId);
+        Map<String, Object> payload =
+                Map.of("assignment", Map.of("points_possible", points, "grading_type", "points"));
         String body = objectMapper.writeValueAsString(payload);
 
-        HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(url))
-            .header("Authorization", "Bearer " + token)
-            .header("Content-Type", "application/json")
-            .PUT(HttpRequest.BodyPublishers.ofString(body))
-            .build();
+        HttpRequest request =
+                HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .header("Authorization", "Bearer " + token)
+                        .header("Content-Type", "application/json")
+                        .PUT(HttpRequest.BodyPublishers.ofString(body))
+                        .build();
 
         HttpResponse<String> response = httpClient.send(request, BodyHandlers.ofString());
         if (response.statusCode() >= 400) {
-            throw new IOException("Failed to update assignment points: HTTP " + response.statusCode() + " " + response.body());
+            throw new IOException(
+                    "Failed to update assignment points: HTTP "
+                            + response.statusCode()
+                            + " "
+                            + response.body());
         }
     }
 
-    public JsonNode createRubric(String courseId, Map<String, String> formFields) throws IOException, InterruptedException {
+    public JsonNode createRubric(String courseId, Map<String, String> formFields)
+            throws IOException, InterruptedException {
         String url = String.format("%s/api/v1/courses/%s/rubrics", baseUrl, courseId);
         String formBody = toFormBody(formFields);
 
-        HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(url))
-            .header("Authorization", "Bearer " + token)
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .POST(HttpRequest.BodyPublishers.ofString(formBody))
-            .build();
+        HttpRequest request =
+                HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .header("Authorization", "Bearer " + token)
+                        .header("Content-Type", "application/x-www-form-urlencoded")
+                        .POST(HttpRequest.BodyPublishers.ofString(formBody))
+                        .build();
 
         HttpResponse<String> response = httpClient.send(request, BodyHandlers.ofString());
         if (response.statusCode() >= 400) {
-            throw new IOException("Rubric create failed: HTTP " + response.statusCode() + "\n" + response.body());
+            throw new IOException(
+                    "Rubric create failed: HTTP " + response.statusCode() + "\n" + response.body());
         }
         return objectMapper.readTree(response.body());
     }
@@ -76,40 +82,56 @@ public final class CanvasClient {
         return getPaginated(url);
     }
 
-    public List<JsonNode> listAssignments(String courseId) throws IOException, InterruptedException {
+    public List<JsonNode> listAssignments(String courseId)
+            throws IOException, InterruptedException {
         String url = String.format("%s/api/v1/courses/%s/assignments", baseUrl, courseId);
         return getPaginated(url);
     }
 
-    public JsonNode getAssignmentWithRubric(String courseId, String assignmentId) throws IOException, InterruptedException {
-        String url = String.format("%s/api/v1/courses/%s/assignments/%s?include=rubric,assignment_visibility,overrides,ab_guid", baseUrl, courseId, assignmentId);
-        HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(url))
-            .header("Authorization", "Bearer " + token)
-            .GET()
-            .build();
+    public JsonNode getAssignmentWithRubric(String courseId, String assignmentId)
+            throws IOException, InterruptedException {
+        String url =
+                String.format(
+                        "%s/api/v1/courses/%s/assignments/%s?include=rubric,assignment_visibility,overrides,ab_guid",
+                        baseUrl, courseId, assignmentId);
+        HttpRequest request =
+                HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .header("Authorization", "Bearer " + token)
+                        .GET()
+                        .build();
 
         HttpResponse<String> response = httpClient.send(request, BodyHandlers.ofString());
         if (response.statusCode() >= 400) {
-            throw new IOException("Failed to fetch assignment: HTTP " + response.statusCode() + " " + response.body());
+            throw new IOException(
+                    "Failed to fetch assignment: HTTP "
+                            + response.statusCode()
+                            + " "
+                            + response.body());
         }
         return objectMapper.readTree(response.body());
     }
-
 
     private List<JsonNode> getPaginated(String url) throws IOException, InterruptedException {
         var result = new java.util.ArrayList<JsonNode>();
         String nextUrl = url;
         while (nextUrl != null) {
-            HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(nextUrl))
-                .header("Authorization", "Bearer " + token)
-                .GET()
-                .build();
+            HttpRequest request =
+                    HttpRequest.newBuilder()
+                            .uri(URI.create(nextUrl))
+                            .header("Authorization", "Bearer " + token)
+                            .GET()
+                            .build();
 
             HttpResponse<String> response = httpClient.send(request, BodyHandlers.ofString());
             if (response.statusCode() >= 400) {
-                throw new IOException("HTTP " + response.statusCode() + " while calling " + nextUrl + ": " + response.body());
+                throw new IOException(
+                        "HTTP "
+                                + response.statusCode()
+                                + " while calling "
+                                + nextUrl
+                                + ": "
+                                + response.body());
             }
 
             JsonNode body = objectMapper.readTree(response.body());
@@ -142,14 +164,13 @@ public final class CanvasClient {
     }
 
     public Map<String, String> buildFormFieldsForRubricCreate(
-        String title,
-        boolean freeFormComments,
-        List<RubricModels.Criterion> criteria,
-        int associationId,
-        boolean useForGrading,
-        boolean hideScoreTotal,
-        String purpose
-    ) {
+            String title,
+            boolean freeFormComments,
+            List<RubricModels.Criterion> criteria,
+            int associationId,
+            boolean useForGrading,
+            boolean hideScoreTotal,
+            String purpose) {
         Map<String, String> data = new HashMap<>();
         data.put("rubric[title]", title);
         data.put("rubric[free_form_criterion_comments]", Boolean.toString(freeFormComments));

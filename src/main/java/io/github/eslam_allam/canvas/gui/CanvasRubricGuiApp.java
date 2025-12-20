@@ -1,51 +1,37 @@
 package io.github.eslam_allam.canvas.gui;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.github.eslam_allam.canvas.core.CanvasClient;
 import io.github.eslam_allam.canvas.core.CsvRubricParser;
 import io.github.eslam_allam.canvas.core.RubricModels;
-import com.fasterxml.jackson.databind.JsonNode;
-
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.prefs.Preferences;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;
-
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
-import javafx.geometry.Orientation;
-import javafx.scene.Scene;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
-
 import javafx.scene.input.Clipboard;
-import javafx.scene.text.Text;
-
-
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.control.cell.PropertyValueFactory;
-
+import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-
-import java.io.File;
-import java.util.Objects;
-
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.prefs.Preferences;
-
-
 
 public class CanvasRubricGuiApp extends Application {
 
@@ -64,7 +50,6 @@ public class CanvasRubricGuiApp extends Application {
     private CheckBox decodeHtmlCheck;
     private Button showPreviewBtn;
 
-
     private Label statusLabel;
 
     private TableView<RubricRow> rubricPreviewTable;
@@ -74,7 +59,6 @@ public class CanvasRubricGuiApp extends Application {
     private ObservableList<JsonNode> courses = FXCollections.observableArrayList();
 
     private ObservableList<JsonNode> assignments = FXCollections.observableArrayList();
-
 
     private final Preferences prefs = Preferences.userNodeForPackage(CanvasRubricGuiApp.class);
 
@@ -90,9 +74,7 @@ public class CanvasRubricGuiApp extends Application {
         topBox.getChildren().add(wrapInCard("Canvas Connection", buildConnectionPane()));
         root.setTop(topBox);
 
-
         loadSettings();
-
 
         mainCenterPane = new SplitPane();
         mainCenterPane.getItems().add(buildCoursesPane());
@@ -101,19 +83,17 @@ public class CanvasRubricGuiApp extends Application {
         mainCenterPane.setDividerPositions(0.5);
         root.setCenter(mainCenterPane);
 
-
-
         VBox bottomBox = new VBox(10);
         bottomBox.getChildren().add(wrapInCard("Rubric Configuration", buildRubricPane()));
         root.setBottom(bottomBox);
 
         Scene scene = new Scene(root, 1000, 650);
-        scene.getStylesheets().add(
-            Objects.requireNonNull(
-                getClass().getResource("/style.css"),
-                "style.css not found on classpath"
-            ).toExternalForm()
-        );
+        scene.getStylesheets()
+                .add(
+                        Objects.requireNonNull(
+                                        getClass().getResource("/style.css"),
+                                        "style.css not found on classpath")
+                                .toExternalForm());
         primaryStage.setScene(scene);
 
         primaryStage.show();
@@ -149,25 +129,30 @@ public class CanvasRubricGuiApp extends Application {
         Label label = new Label("Courses");
 
         courseListView = new ListView<>(courses);
-        courseListView.setCellFactory(list -> new ListCell<>() {
-            @Override
-            protected void updateItem(JsonNode item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    String name = item.path("name").asText("");
-                    String code = item.path("course_code").asText("");
-                    if (!code.isEmpty()) {
-                        setText(name + " [" + code + "]");
-                    } else {
-                        setText(name);
-                    }
-                }
-            }
-        });
+        courseListView.setCellFactory(
+                list ->
+                        new ListCell<>() {
+                            @Override
+                            protected void updateItem(JsonNode item, boolean empty) {
+                                super.updateItem(item, empty);
+                                if (empty || item == null) {
+                                    setText(null);
+                                } else {
+                                    String name = item.path("name").asText("");
+                                    String code = item.path("course_code").asText("");
+                                    if (!code.isEmpty()) {
+                                        setText(name + " [" + code + "]");
+                                    } else {
+                                        setText(name);
+                                    }
+                                }
+                            }
+                        });
 
-        courseListView.getSelectionModel().selectedItemProperty().addListener((obs, oldV, newV) -> onCourseSelected(newV));
+        courseListView
+                .getSelectionModel()
+                .selectedItemProperty()
+                .addListener((obs, oldV, newV) -> onCourseSelected(newV));
 
         Button loadCoursesBtn = new Button("Load Courses");
         loadCoursesBtn.setOnAction(e -> onLoadCourses());
@@ -182,20 +167,25 @@ public class CanvasRubricGuiApp extends Application {
         Label label = new Label("Assignments");
 
         assignmentListView = new ListView<>(assignments);
-        assignmentListView.setCellFactory(list -> new ListCell<>() {
-            @Override
-            protected void updateItem(JsonNode item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    String name = item.path("name").asText("");
-                    setText(name);
-                }
-            }
-        });
+        assignmentListView.setCellFactory(
+                list ->
+                        new ListCell<>() {
+                            @Override
+                            protected void updateItem(JsonNode item, boolean empty) {
+                                super.updateItem(item, empty);
+                                if (empty || item == null) {
+                                    setText(null);
+                                } else {
+                                    String name = item.path("name").asText("");
+                                    setText(name);
+                                }
+                            }
+                        });
 
-        assignmentListView.getSelectionModel().selectedItemProperty().addListener((obs, oldV, newV) -> onAssignmentSelected(newV));
+        assignmentListView
+                .getSelectionModel()
+                .selectedItemProperty()
+                .addListener((obs, oldV, newV) -> onAssignmentSelected(newV));
 
         Button loadAssignmentsBtn = new Button("Load Assignments");
         loadAssignmentsBtn.setOnAction(e -> onLoadAssignments());
@@ -220,8 +210,6 @@ public class CanvasRubricGuiApp extends Application {
         titleField = new TextField();
         csvPathField = new TextField();
 
-
-
         freeFormCommentsCheck = new CheckBox("Free-form comments");
         freeFormCommentsCheck.setSelected(true);
         useForGradingCheck = new CheckBox("Use for grading");
@@ -230,7 +218,6 @@ public class CanvasRubricGuiApp extends Application {
         syncPointsCheck = new CheckBox("Sync assignment points to rubric total");
         decodeHtmlCheck = new CheckBox("Decode HTML entities in CSV text");
         decodeHtmlCheck.setSelected(true);
-
 
         Button browseBtn = new Button("Browse...");
         browseBtn.setOnAction(e -> onBrowseCsv());
@@ -243,7 +230,6 @@ public class CanvasRubricGuiApp extends Application {
         showPreviewBtn.setVisible(false);
         showPreviewBtn.setManaged(false);
 
-
         Button downloadTemplateBtn = new Button("Download CSV Template");
         downloadTemplateBtn.setOnAction(e -> onDownloadTemplate());
 
@@ -253,11 +239,9 @@ public class CanvasRubricGuiApp extends Application {
         Button downloadRubricBtn = new Button("Download Rubric as CSV");
         downloadRubricBtn.setOnAction(e -> onDownloadRubricCsv());
 
-
         Button createBtn = new Button("Create Rubric");
 
         createBtn.setOnAction(e -> onCreate());
-
 
         Button quitBtn = new Button("Quit");
         quitBtn.setOnAction(e -> Platform.exit());
@@ -282,20 +266,22 @@ public class CanvasRubricGuiApp extends Application {
         HBox csvButtons = new HBox(5, browseBtn, pasteCsvFromClipboardBtn, showPreviewBtn);
         grid.add(csvButtons, 2, row++);
 
-        csvPathField.textProperty().addListener((obs, oldVal, newVal) -> {
-            boolean hasCsv = newVal != null && !newVal.trim().isEmpty() && newVal.trim().toLowerCase().endsWith(".csv");
-            showPreviewBtn.setVisible(hasCsv);
-            showPreviewBtn.setManaged(hasCsv);
-        });
-
+        csvPathField
+                .textProperty()
+                .addListener(
+                        (obs, oldVal, newVal) -> {
+                            boolean hasCsv =
+                                    newVal != null
+                                            && !newVal.trim().isEmpty()
+                                            && newVal.trim().toLowerCase().endsWith(".csv");
+                            showPreviewBtn.setVisible(hasCsv);
+                            showPreviewBtn.setManaged(hasCsv);
+                        });
 
         grid.add(downloadTemplateBtn, 2, row++);
 
         grid.add(copyTemplateBtn, 2, row++);
         grid.add(downloadRubricBtn, 2, row++);
-
-
-
 
         grid.add(freeFormCommentsCheck, 0, row++, 2, 1);
         grid.add(useForGradingCheck, 0, row++, 2, 1);
@@ -303,15 +289,11 @@ public class CanvasRubricGuiApp extends Application {
         grid.add(syncPointsCheck, 0, row++, 3, 1);
         grid.add(decodeHtmlCheck, 0, row++, 3, 1);
 
-
         grid.add(statusLabel, 0, row++, 3, 1);
 
         HBox buttons = new HBox(10, createBtn, quitBtn);
         buttons.getStyleClass().add("bottom-actions");
         grid.add(buttons, 0, row, 3, 1);
-
-
-
 
         return grid;
     }
@@ -340,7 +322,6 @@ public class CanvasRubricGuiApp extends Application {
         tokenField.setText(prefs.get("token", ""));
     }
 
-
     private void onLoadCourses() {
         String token = tokenField.getText().trim();
         if (token.isEmpty()) {
@@ -349,18 +330,22 @@ public class CanvasRubricGuiApp extends Application {
         }
         String baseUrl = baseUrlField.getText().trim();
         setStatus("Loading courses...");
-        new Thread(() -> {
-            try {
-                CanvasClient client = new CanvasClient(baseUrl, token);
-                List<JsonNode> list = client.listCourses();
-                Platform.runLater(() -> {
-                    courses.setAll(list);
-                    setStatus("Loaded " + list.size() + " courses");
-                });
-            } catch (Exception ex) {
-                Platform.runLater(() -> showError("Error", ex.getMessage()));
-            }
-        }, "load-courses").start();
+        new Thread(
+                        () -> {
+                            try {
+                                CanvasClient client = new CanvasClient(baseUrl, token);
+                                List<JsonNode> list = client.listCourses();
+                                Platform.runLater(
+                                        () -> {
+                                            courses.setAll(list);
+                                            setStatus("Loaded " + list.size() + " courses");
+                                        });
+                            } catch (Exception ex) {
+                                Platform.runLater(() -> showError("Error", ex.getMessage()));
+                            }
+                        },
+                        "load-courses")
+                .start();
     }
 
     private void onCourseSelected(JsonNode course) {
@@ -386,18 +371,22 @@ public class CanvasRubricGuiApp extends Application {
             return;
         }
         setStatus("Loading assignments...");
-        new Thread(() -> {
-            try {
-                CanvasClient client = new CanvasClient(baseUrl, token);
-                List<JsonNode> list = client.listAssignments(courseId);
-                Platform.runLater(() -> {
-                    assignments.setAll(list);
-                    setStatus("Loaded " + list.size() + " assignments");
-                });
-            } catch (Exception ex) {
-                Platform.runLater(() -> showError("Error", ex.getMessage()));
-            }
-        }, "load-assignments").start();
+        new Thread(
+                        () -> {
+                            try {
+                                CanvasClient client = new CanvasClient(baseUrl, token);
+                                List<JsonNode> list = client.listAssignments(courseId);
+                                Platform.runLater(
+                                        () -> {
+                                            assignments.setAll(list);
+                                            setStatus("Loaded " + list.size() + " assignments");
+                                        });
+                            } catch (Exception ex) {
+                                Platform.runLater(() -> showError("Error", ex.getMessage()));
+                            }
+                        },
+                        "load-assignments")
+                .start();
     }
 
     private void onAssignmentSelected(JsonNode assignment) {
@@ -430,8 +419,6 @@ public class CanvasRubricGuiApp extends Application {
         loadRubricPreview(Path.of(path));
     }
 
-
-
     private void showMainView() {
         root.setCenter(mainCenterPane);
         if (showPreviewBtn != null) {
@@ -440,43 +427,46 @@ public class CanvasRubricGuiApp extends Application {
         }
     }
 
-
-
-    private TableView<RubricRow> buildRubricPreviewTable(int maxRatings, List<String> ratingHeaders) {
+    private TableView<RubricRow> buildRubricPreviewTable(
+            int maxRatings, List<String> ratingHeaders) {
         TableView<RubricRow> table = new TableView<>();
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         TableColumn<RubricRow, String> critCol = new TableColumn<>("Criterion");
-        critCol.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().getCriterion()));
+        critCol.setCellValueFactory(
+                cell -> new ReadOnlyStringWrapper(cell.getValue().getCriterion()));
 
         TableColumn<RubricRow, String> descCol = new TableColumn<>("Description");
-        descCol.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().getDescription()));
+        descCol.setCellValueFactory(
+                cell -> new ReadOnlyStringWrapper(cell.getValue().getDescription()));
 
         TableColumn<RubricRow, String> pointsCol = new TableColumn<>("Points");
-        pointsCol.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().getPoints()));
+        pointsCol.setCellValueFactory(
+                cell -> new ReadOnlyStringWrapper(cell.getValue().getPoints()));
 
         enableWrappingCellFactory(critCol);
         enableWrappingCellFactory(descCol);
         enableWrappingCellFactory(pointsCol);
 
-
         java.util.List<TableColumn<RubricRow, String>> ratingCols = new java.util.ArrayList<>();
         for (int i = 0; i < maxRatings; i++) {
             final int idx = i;
-            String header = (ratingHeaders != null && idx < ratingHeaders.size())
-                ? ratingHeaders.get(idx)
-                : ("Rating " + (i + 1));
+            String header =
+                    (ratingHeaders != null && idx < ratingHeaders.size())
+                            ? ratingHeaders.get(idx)
+                            : ("Rating " + (i + 1));
 
             TableColumn<RubricRow, String> ratingCol = new TableColumn<>(header);
-            ratingCol.setCellValueFactory(cell -> {
-                java.util.List<RubricModels.Rating> ratings = cell.getValue().getRatings();
-                if (idx >= ratings.size()) {
-                    return new ReadOnlyStringWrapper("");
-                }
-                RubricModels.Rating r = ratings.get(idx);
-                String text = r.getLongDescription();
-                return new ReadOnlyStringWrapper(text == null ? "" : text);
-            });
+            ratingCol.setCellValueFactory(
+                    cell -> {
+                        java.util.List<RubricModels.Rating> ratings = cell.getValue().getRatings();
+                        if (idx >= ratings.size()) {
+                            return new ReadOnlyStringWrapper("");
+                        }
+                        RubricModels.Rating r = ratings.get(idx);
+                        String text = r.getLongDescription();
+                        return new ReadOnlyStringWrapper(text == null ? "" : text);
+                    });
             enableWrappingCellFactory(ratingCol);
             ratingCols.add(ratingCol);
         }
@@ -486,30 +476,28 @@ public class CanvasRubricGuiApp extends Application {
         return table;
     }
 
-
-
-
     private void enableWrappingCellFactory(TableColumn<RubricRow, String> column) {
-        column.setCellFactory(col -> new TableCell<>() {
-            private final Text text = new Text();
+        column.setCellFactory(
+                col ->
+                        new TableCell<>() {
+                            private final Text text = new Text();
 
-            {
-                text.wrappingWidthProperty().bind(col.widthProperty().subtract(10));
-                setGraphic(text);
-            }
+                            {
+                                text.wrappingWidthProperty().bind(col.widthProperty().subtract(10));
+                                setGraphic(text);
+                            }
 
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    text.setText(null);
-                } else {
-                    text.setText(item);
-                }
-            }
-        });
+                            @Override
+                            protected void updateItem(String item, boolean empty) {
+                                super.updateItem(item, empty);
+                                if (empty || item == null) {
+                                    text.setText(null);
+                                } else {
+                                    text.setText(item);
+                                }
+                            }
+                        });
     }
-
 
     private BorderPane buildFullHeightPreviewPane() {
 
@@ -529,76 +517,84 @@ public class CanvasRubricGuiApp extends Application {
         return pane;
     }
 
-
-
     private void loadRubricPreview(Path csvPath) {
         setStatus("Loading preview...");
-        new Thread(() -> {
-            try {
-                CsvRubricParser parser = new CsvRubricParser(decodeHtmlCheck.isSelected());
+        new Thread(
+                        () -> {
+                            try {
+                                CsvRubricParser parser =
+                                        new CsvRubricParser(decodeHtmlCheck.isSelected());
 
-                CsvRubricParser.ParsedRubric parsed = parser.parse(csvPath);
+                                CsvRubricParser.ParsedRubric parsed = parser.parse(csvPath);
 
-                List<RubricModels.Criterion> criteria = parsed.criteria();
+                                List<RubricModels.Criterion> criteria = parsed.criteria();
 
-                List<RubricRow> rows = new ArrayList<>();
-                int maxRatings = 0;
-                List<String> ratingHeaders = new ArrayList<>();
-                boolean headerInitialized = false;
+                                List<RubricRow> rows = new ArrayList<>();
+                                int maxRatings = 0;
+                                List<String> ratingHeaders = new ArrayList<>();
+                                boolean headerInitialized = false;
 
-                for (RubricModels.Criterion c : criteria) {
-                    List<RubricModels.Rating> ratings = c.getRatings();
-                    maxRatings = Math.max(maxRatings, ratings.size());
+                                for (RubricModels.Criterion c : criteria) {
+                                    List<RubricModels.Rating> ratings = c.getRatings();
+                                    maxRatings = Math.max(maxRatings, ratings.size());
 
-                    if (!headerInitialized && !ratings.isEmpty()) {
-                        for (RubricModels.Rating r : ratings) {
-                            ratingHeaders.add(r.getDescription() + " (" + r.getPoints() + ")");
-                        }
-                        headerInitialized = true;
-                    }
+                                    if (!headerInitialized && !ratings.isEmpty()) {
+                                        for (RubricModels.Rating r : ratings) {
+                                            ratingHeaders.add(
+                                                    r.getDescription()
+                                                            + " ("
+                                                            + r.getPoints()
+                                                            + ")");
+                                        }
+                                        headerInitialized = true;
+                                    }
 
-                    double maxPoints = ratings.stream()
-                        .mapToDouble(RubricModels.Rating::getPoints)
-                        .max()
-                        .orElse(0.0);
+                                    double maxPoints =
+                                            ratings.stream()
+                                                    .mapToDouble(RubricModels.Rating::getPoints)
+                                                    .max()
+                                                    .orElse(0.0);
 
-                    rows.add(new RubricRow(
-                        c.getName(),
-                        c.getDescription(),
-                        Double.toString(maxPoints),
-                        ratings
-                    ));
+                                    rows.add(
+                                            new RubricRow(
+                                                    c.getName(),
+                                                    c.getDescription(),
+                                                    Double.toString(maxPoints),
+                                                    ratings));
+                                }
 
-                }
+                                final int finalMaxRatings = maxRatings;
+                                final List<String> finalRatingHeaders = ratingHeaders;
+                                Platform.runLater(
+                                        () -> {
+                                            if (showPreviewBtn != null) {
+                                                showPreviewBtn.setVisible(false);
+                                                showPreviewBtn.setManaged(false);
+                                            }
+                                            rubricPreviewTable =
+                                                    buildRubricPreviewTable(
+                                                            finalMaxRatings, finalRatingHeaders);
+                                            rubricPreviewTable.getItems().setAll(rows);
+                                            root.setCenter(buildFullHeightPreviewPane());
+                                            setStatus("Preview loaded");
+                                        });
 
-                final int finalMaxRatings = maxRatings;
-                final List<String> finalRatingHeaders = ratingHeaders;
-                Platform.runLater(() -> {
-                    if (showPreviewBtn != null) {
-                        showPreviewBtn.setVisible(false);
-                        showPreviewBtn.setManaged(false);
-                    }
-                    rubricPreviewTable = buildRubricPreviewTable(finalMaxRatings, finalRatingHeaders);
-                    rubricPreviewTable.getItems().setAll(rows);
-                    root.setCenter(buildFullHeightPreviewPane());
-                    setStatus("Preview loaded");
-                });
-
-
-
-            } catch (Exception ex) {
-                Platform.runLater(() -> {
-                    if (rubricPreviewTable != null) {
-                        rubricPreviewTable.getItems().clear();
-                    }
-                    showError("Error", "Could not load preview: " + ex.getMessage());
-                    setStatus("Preview error");
-                });
-
-            }
-        }, "rubric-preview").start();
+                            } catch (Exception ex) {
+                                Platform.runLater(
+                                        () -> {
+                                            if (rubricPreviewTable != null) {
+                                                rubricPreviewTable.getItems().clear();
+                                            }
+                                            showError(
+                                                    "Error",
+                                                    "Could not load preview: " + ex.getMessage());
+                                            setStatus("Preview error");
+                                        });
+                            }
+                        },
+                        "rubric-preview")
+                .start();
     }
-
 
     private List<String> templateHeader(int maxRatings) {
         List<String> header = new ArrayList<>();
@@ -617,7 +613,6 @@ public class CanvasRubricGuiApp extends Application {
         // Backwards-compatible default template with two ratings
         return templateHeader(2);
     }
-
 
     private void onDownloadTemplate() {
         String rubricTitle = titleField.getText().trim();
@@ -679,20 +674,22 @@ public class CanvasRubricGuiApp extends Application {
         csvText = csvText.replace("\r\n", "\n").replace("\r", "\n");
         String[] lines = csvText.split("\n");
         if (lines.length < 2) {
-            showError("Error", "Clipboard CSV must include a header row and at least one data row.");
+            showError(
+                    "Error", "Clipboard CSV must include a header row and at least one data row.");
             return;
         }
 
         java.util.List<String> headerCells;
         try {
             java.io.StringReader sr = new java.io.StringReader(csvText);
-            try (org.apache.commons.csv.CSVParser parser = org.apache.commons.csv.CSVFormat.DEFAULT
-                     .builder()
-                     .setHeader()
-                     .setSkipHeaderRecord(true)
-                     .setTrim(true)
-                     .build()
-                     .parse(sr)) {
+            try (org.apache.commons.csv.CSVParser parser =
+                    org.apache.commons.csv.CSVFormat.DEFAULT
+                            .builder()
+                            .setHeader()
+                            .setSkipHeaderRecord(true)
+                            .setTrim(true)
+                            .build()
+                            .parse(sr)) {
                 headerCells = parser.getHeaderNames();
             }
         } catch (IOException ex) {
@@ -708,15 +705,20 @@ public class CanvasRubricGuiApp extends Application {
         String[] headerArray = headerCells.toArray(String[]::new);
 
         // Reuse RatingHeaderDetector to validate rating groups
-        java.util.List<io.github.eslam_allam.canvas.core.RatingHeaderDetector.RatingGroup> ratingGroups =
-            io.github.eslam_allam.canvas.core.RatingHeaderDetector.detect(headerArray);
+        java.util.List<io.github.eslam_allam.canvas.core.RatingHeaderDetector.RatingGroup>
+                ratingGroups =
+                        io.github.eslam_allam.canvas.core.RatingHeaderDetector.detect(headerArray);
 
         if (ratingGroups.size() < 2) {
-            showError("Error", "Clipboard CSV must have at least rating1/rating1_points/rating1_desc and rating2/rating2_points/rating2_desc columns.");
+            showError(
+                    "Error",
+                    "Clipboard CSV must have at least rating1/rating1_points/rating1_desc and"
+                            + " rating2/rating2_points/rating2_desc columns.");
             return;
         }
 
-        // Ensure no unexpected extra columns, mirroring CsvRubricParser.validateNoExtraColumns behavior
+        // Ensure no unexpected extra columns, mirroring CsvRubricParser.validateNoExtraColumns
+        // behavior
         java.util.Set<String> allowed = new java.util.HashSet<>();
         allowed.add("criterion");
         allowed.add("criterion_desc");
@@ -733,23 +735,28 @@ public class CanvasRubricGuiApp extends Application {
             }
         }
         if (!extra.isEmpty()) {
-            showError("Error", "Unexpected column(s) in clipboard CSV header: " + String.join(", ", extra));
+            showError(
+                    "Error",
+                    "Unexpected column(s) in clipboard CSV header: " + String.join(", ", extra));
             return;
         }
 
         try {
-            java.nio.file.Path tempFile = java.nio.file.Files.createTempFile("canvas_rubric_", ".csv");
-            java.nio.file.Files.writeString(tempFile, csvText, java.nio.charset.StandardCharsets.UTF_8);
+            java.nio.file.Path tempFile =
+                    java.nio.file.Files.createTempFile("canvas_rubric_", ".csv");
+            java.nio.file.Files.writeString(
+                    tempFile, csvText, java.nio.charset.StandardCharsets.UTF_8);
             csvPathField.setText(tempFile.toAbsolutePath().toString());
-            showInfo("Clipboard CSV saved", "Saved clipboard rubric CSV to temporary file:\n" + tempFile.toAbsolutePath());
+            showInfo(
+                    "Clipboard CSV saved",
+                    "Saved clipboard rubric CSV to temporary file:\n" + tempFile.toAbsolutePath());
         } catch (IOException ex) {
-            showError("Error", "Failed to save clipboard CSV to temporary file: " + ex.getMessage());
+            showError(
+                    "Error", "Failed to save clipboard CSV to temporary file: " + ex.getMessage());
         }
     }
 
     private void onDownloadRubricCsv() {
-
-
 
         String token = tokenField.getText().trim();
         if (token.isEmpty()) {
@@ -776,85 +783,97 @@ public class CanvasRubricGuiApp extends Application {
         }
 
         setStatus("Downloading rubric...");
-        new Thread(() -> {
-            try {
-                CanvasClient client = new CanvasClient(baseUrlField.getText().trim(), token);
-                JsonNode assignment = client.getAssignmentWithRubric(courseId, assignmentId);
-                JsonNode rubric = assignment.path("rubric");
-                if (rubric.isMissingNode() || !rubric.isArray() || rubric.isEmpty()) {
+        new Thread(
+                        () -> {
+                            try {
+                                CanvasClient client =
+                                        new CanvasClient(baseUrlField.getText().trim(), token);
+                                JsonNode assignment =
+                                        client.getAssignmentWithRubric(courseId, assignmentId);
+                                JsonNode rubric = assignment.path("rubric");
+                                if (rubric.isMissingNode()
+                                        || !rubric.isArray()
+                                        || rubric.isEmpty()) {
 
-                    Platform.runLater(() -> {
-                        setStatus("No rubric");
-                        showError("Error", "This assignment has no rubric.");
-                    });
-                    return;
-                }
+                                    Platform.runLater(
+                                            () -> {
+                                                setStatus("No rubric");
+                                                showError(
+                                                        "Error", "This assignment has no rubric.");
+                                            });
+                                    return;
+                                }
 
-                int maxRatings = 0;
-                for (JsonNode crit : rubric) {
-                    JsonNode ratings = crit.path("ratings");
-                    if (ratings.isArray()) {
-                        maxRatings = Math.max(maxRatings, ratings.size());
-                    }
-                }
-                if (maxRatings == 0) {
-                    Platform.runLater(() -> {
-                        setStatus("No ratings");
-                        showError("Error", "The rubric has no ratings.");
-                    });
-                    return;
-                }
+                                int maxRatings = 0;
+                                for (JsonNode crit : rubric) {
+                                    JsonNode ratings = crit.path("ratings");
+                                    if (ratings.isArray()) {
+                                        maxRatings = Math.max(maxRatings, ratings.size());
+                                    }
+                                }
+                                if (maxRatings == 0) {
+                                    Platform.runLater(
+                                            () -> {
+                                                setStatus("No ratings");
+                                                showError("Error", "The rubric has no ratings.");
+                                            });
+                                    return;
+                                }
 
-                List<String> header = templateHeader(maxRatings);
-                List<List<String>> rows = new ArrayList<>();
+                                List<String> header = templateHeader(maxRatings);
+                                List<List<String>> rows = new ArrayList<>();
 
-                for (JsonNode crit : rubric) {
-                    String description = crit.path("description").asText("");
-                    String longDesc = crit.path("long_description").asText("");
+                                for (JsonNode crit : rubric) {
+                                    String description = crit.path("description").asText("");
+                                    String longDesc = crit.path("long_description").asText("");
 
-                    JsonNode ratings = crit.path("ratings");
-                    List<String> row = new ArrayList<>();
-                    row.add(description);
-                    row.add(longDesc);
+                                    JsonNode ratings = crit.path("ratings");
+                                    List<String> row = new ArrayList<>();
+                                    row.add(description);
+                                    row.add(longDesc);
 
+                                    int count = ratings.isArray() ? ratings.size() : 0;
+                                    for (int i = 0; i < maxRatings; i++) {
+                                        if (i < count) {
+                                            JsonNode r = ratings.get(i);
+                                            row.add(r.path("description").asText(""));
+                                            row.add(r.path("points").asText(""));
+                                            row.add(r.path("long_description").asText(""));
+                                        } else {
+                                            row.add("");
+                                            row.add("");
+                                            row.add("");
+                                        }
+                                    }
+                                    rows.add(row);
+                                }
 
-                    int count = ratings.isArray() ? ratings.size() : 0;
-                    for (int i = 0; i < maxRatings; i++) {
-                        if (i < count) {
-                            JsonNode r = ratings.get(i);
-                            row.add(r.path("description").asText(""));
-                            row.add(r.path("points").asText(""));
-                            row.add(r.path("long_description").asText(""));
-                        } else {
-                            row.add("");
-                            row.add("");
-                            row.add("");
-                        }
-                    }
-                    rows.add(row);
-                }
+                                try (PrintWriter writer = new PrintWriter(new FileWriter(file))) {
+                                    writeCsvRow(writer, header);
+                                    for (List<String> row : rows) {
+                                        writeCsvRow(writer, row);
+                                    }
+                                }
 
+                                Platform.runLater(
+                                        () -> {
+                                            setStatus("Done");
+                                            showInfo(
+                                                    "Rubric downloaded",
+                                                    "Saved rubric CSV to:\n"
+                                                            + file.getAbsolutePath());
+                                        });
 
-                try (PrintWriter writer = new PrintWriter(new FileWriter(file))) {
-                    writeCsvRow(writer, header);
-                    for (List<String> row : rows) {
-                        writeCsvRow(writer, row);
-                    }
-                }
-
-
-                Platform.runLater(() -> {
-                    setStatus("Done");
-                    showInfo("Rubric downloaded", "Saved rubric CSV to:\n" + file.getAbsolutePath());
-                });
-
-            } catch (Exception ex) {
-                Platform.runLater(() -> {
-                    setStatus("Error");
-                    showError("Error", ex.getMessage());
-                });
-            }
-        }, "download-rubric").start();
+                            } catch (Exception ex) {
+                                Platform.runLater(
+                                        () -> {
+                                            setStatus("Error");
+                                            showError("Error", ex.getMessage());
+                                        });
+                            }
+                        },
+                        "download-rubric")
+                .start();
     }
 
     private void onCreate() {
@@ -892,46 +911,60 @@ public class CanvasRubricGuiApp extends Application {
         boolean syncPoints = syncPointsCheck.isSelected();
 
         setStatus("Reading CSV...");
-        new Thread(() -> {
-            try {
-                CsvRubricParser parser = new CsvRubricParser(decodeHtmlCheck.isSelected());
+        new Thread(
+                        () -> {
+                            try {
+                                CsvRubricParser parser =
+                                        new CsvRubricParser(decodeHtmlCheck.isSelected());
 
-                CsvRubricParser.ParsedRubric parsed = parser.parse(Path.of(csvPath));
-                List<RubricModels.Criterion> criteria = parsed.criteria();
-                double total = parsed.totalPoints();
+                                CsvRubricParser.ParsedRubric parsed =
+                                        parser.parse(Path.of(csvPath));
+                                List<RubricModels.Criterion> criteria = parsed.criteria();
+                                double total = parsed.totalPoints();
 
-                CanvasClient client = new CanvasClient(baseUrl, token);
-                var formFields = client.buildFormFieldsForRubricCreate(
-                    title,
-                    freeForm,
-                    criteria,
-                    Integer.parseInt(assignmentId),
-                    useForGrading,
-                    hideScoreTotal,
-                    "grading"
-                );
+                                CanvasClient client = new CanvasClient(baseUrl, token);
+                                var formFields =
+                                        client.buildFormFieldsForRubricCreate(
+                                                title,
+                                                freeForm,
+                                                criteria,
+                                                Integer.parseInt(assignmentId),
+                                                useForGrading,
+                                                hideScoreTotal,
+                                                "grading");
 
-                if (syncPoints) {
-                    Platform.runLater(() -> setStatus("Updating assignment points..."));
-                    client.updateAssignmentPoints(courseId, assignmentId, total);
-                }
+                                if (syncPoints) {
+                                    Platform.runLater(
+                                            () -> setStatus("Updating assignment points..."));
+                                    client.updateAssignmentPoints(courseId, assignmentId, total);
+                                }
 
-                Platform.runLater(() -> setStatus("Creating rubric..."));
-                JsonNode response = client.createRubric(courseId, formFields);
-                String rubricId = response.path("rubric").path("id").asText("");
-                String assocId = response.path("rubric_association").path("id").asText("");
+                                Platform.runLater(() -> setStatus("Creating rubric..."));
+                                JsonNode response = client.createRubric(courseId, formFields);
+                                String rubricId = response.path("rubric").path("id").asText("");
+                                String assocId =
+                                        response.path("rubric_association").path("id").asText("");
 
-                Platform.runLater(() -> {
-                    setStatus("Done");
-                    showInfo("Success", "Rubric created successfully!\nRubric ID: " + rubricId + "\nAssociation ID: " + assocId);
-                });
-            } catch (Exception ex) {
-                Platform.runLater(() -> {
-                    setStatus("Error");
-                    showError("Error", ex.getMessage());
-                });
-            }
-        }, "create-rubric").start();
+                                Platform.runLater(
+                                        () -> {
+                                            setStatus("Done");
+                                            showInfo(
+                                                    "Success",
+                                                    "Rubric created successfully!\nRubric ID: "
+                                                            + rubricId
+                                                            + "\nAssociation ID: "
+                                                            + assocId);
+                                        });
+                            } catch (Exception ex) {
+                                Platform.runLater(
+                                        () -> {
+                                            setStatus("Error");
+                                            showError("Error", ex.getMessage());
+                                        });
+                            }
+                        },
+                        "create-rubric")
+                .start();
     }
 
     private void setStatus(String msg) {
@@ -968,7 +1001,11 @@ public class CanvasRubricGuiApp extends Application {
         if (value == null) {
             return "";
         }
-        boolean hasSpecial = value.contains(",") || value.contains("\n") || value.contains("\r") || value.contains("\"");
+        boolean hasSpecial =
+                value.contains(",")
+                        || value.contains("\n")
+                        || value.contains("\r")
+                        || value.contains("\"");
         String escaped = value.replace("\"", "\"\"");
         return hasSpecial ? "\"" + escaped + "\"" : escaped;
     }
@@ -979,7 +1016,11 @@ public class CanvasRubricGuiApp extends Application {
         private final String points;
         private final List<RubricModels.Rating> ratings;
 
-        public RubricRow(String criterion, String description, String points, List<RubricModels.Rating> ratings) {
+        public RubricRow(
+                String criterion,
+                String description,
+                String points,
+                List<RubricModels.Rating> ratings) {
             this.criterion = criterion;
             this.description = description;
             this.points = points;
@@ -1003,10 +1044,7 @@ public class CanvasRubricGuiApp extends Application {
         }
     }
 
-
     public static void main(String[] args) {
         launch(args);
     }
 }
-
-

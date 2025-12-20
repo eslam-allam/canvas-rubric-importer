@@ -29,8 +29,6 @@ public class MainApp {
     }
 
     private static String[] stripFlag(String[] args, String flag) {
-        return java.util.Arrays.stream(args)
-                .filter(a -> !a.equals(flag))
-                .toArray(String[]::new);
+        return java.util.Arrays.stream(args).filter(a -> !a.equals(flag)).toArray(String[]::new);
     }
 }

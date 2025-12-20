@@ -3,8 +3,6 @@ package io.github.eslam_allam.canvas.cli;
 import io.github.eslam_allam.canvas.core.CanvasClient;
 import io.github.eslam_allam.canvas.core.CsvRubricParser;
 import io.github.eslam_allam.canvas.core.RubricModels;
-
-
 import java.nio.file.Path;
 import java.util.List;
 
@@ -41,7 +39,8 @@ public final class CliApp {
                 case "--use-for-grading" -> useForGrading = Boolean.parseBoolean(args[++i]);
                 case "--hide-score-total" -> hideScoreTotal = Boolean.parseBoolean(args[++i]);
                 case "--purpose" -> purpose = args[++i];
-                case "--sync-assignment-points" -> syncAssignmentPoints = Boolean.parseBoolean(args[++i]);
+                case "--sync-assignment-points" ->
+                        syncAssignmentPoints = Boolean.parseBoolean(args[++i]);
                 case "--dry-run" -> dryRun = true;
                 default -> {
                     System.err.println("Unknown argument: " + args[i]);
@@ -61,7 +60,6 @@ public final class CliApp {
             System.exit(1);
         }
 
-
         boolean decodeHtml = true;
         for (String arg : args) {
             if ("--no-html-decode".equals(arg)) {
@@ -76,23 +74,23 @@ public final class CliApp {
         double totalPoints = parsed.totalPoints();
 
         CanvasClient client = new CanvasClient(baseUrl, token);
-        var formFields = client.buildFormFieldsForRubricCreate(
-            title,
-            freeFormComments,
-            criteria,
-            Integer.parseInt(assignmentId),
-            useForGrading,
-            hideScoreTotal,
-            purpose
-        );
+        var formFields =
+                client.buildFormFieldsForRubricCreate(
+                        title,
+                        freeFormComments,
+                        criteria,
+                        Integer.parseInt(assignmentId),
+                        useForGrading,
+                        hideScoreTotal,
+                        purpose);
 
         if (dryRun) {
             System.out.println("# Rubric total (sum of criterion points): " + totalPoints);
             formFields.keySet().stream()
-                .filter(k -> k.startsWith("rubric[criteria][0]"))
-                .sorted()
-                .limit(20)
-                .forEach(System.out::println);
+                    .filter(k -> k.startsWith("rubric[criteria][0]"))
+                    .sorted()
+                    .limit(20)
+                    .forEach(System.out::println);
             return;
         }
 
@@ -110,9 +108,12 @@ public final class CliApp {
     }
 
     private static void printUsage() {
-        System.out.println("Usage: java -jar app.jar --course-id <id> --assignment-id <id> --title <title> --csv <file> [options]");
+        System.out.println(
+                "Usage: java -jar app.jar --course-id <id> --assignment-id <id> --title <title>"
+                        + " --csv <file> [options]");
         System.out.println("Options:");
-        System.out.println("  --no-html-decode   Do not decode HTML entities in text fields (e.g., &amp;lt;, -&gt;).");
+        System.out.println(
+                "  --no-html-decode   Do not decode HTML entities in text fields (e.g., &amp;lt;,"
+                        + " -&gt;).");
     }
 }
-

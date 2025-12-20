@@ -89,6 +89,7 @@ jobs:
       - name: Regenerate .SRCINFO
         uses: heyhusen/archlinux-package-action@v2
         with:
+          path: aur-repo
           flags: ''
           namcap: false
           srcinfo: true

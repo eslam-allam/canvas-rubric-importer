@@ -38,10 +38,11 @@ jobs:
           touch ~/.ssh/known_hosts
           ssh-keyscan -t rsa aur.archlinux.org >> ~/.ssh/known_hosts
 
-      - name: Install Arch packaging tools
+      - name: Install tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y git jq curl base-devel
+          sudo apt-get install -y git jq curl pacman-contrib
+
 
       - name: Clone AUR repo
         run: |
@@ -94,7 +95,8 @@ jobs:
       - name: Regenerate .SRCINFO
         run: |
           cd aur-repo
-          makepkg --printsrcinfo > .SRCINFO
+          mksrcinfo > .SRCINFO
+
 
       - name: Commit and push to AUR
         run: |

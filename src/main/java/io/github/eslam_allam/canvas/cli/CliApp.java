@@ -109,8 +109,8 @@ public final class CliApp {
 
     private static void printUsage() {
         System.out.println(
-                "Usage: CanvasRubricImporter --token <canvas-token> --course-id <id> --assignment-id <id> --title <title>"
-                        + " --csv <file> [options]");
+                "Usage: CanvasRubricImporter --token <canvas-token> --course-id <id>"
+                        + " --assignment-id <id> --title <title> --csv <file> [options]");
         System.out.println("Options:");
         System.out.println(
                 "  --no-html-decode   Do not decode HTML entities in text fields (e.g., &amp;lt;,"

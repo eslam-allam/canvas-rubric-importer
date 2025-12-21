@@ -28,6 +28,7 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
@@ -49,6 +50,7 @@ public class CanvasRubricGuiApp extends Application {
     private CheckBox syncPointsCheck;
     private CheckBox decodeHtmlCheck;
     private Button showPreviewBtn;
+    private Button backBtn;
 
     private Label statusLabel;
 
@@ -230,6 +232,11 @@ public class CanvasRubricGuiApp extends Application {
         showPreviewBtn.setVisible(false);
         showPreviewBtn.setManaged(false);
 
+        backBtn = new Button("Back to Main View");
+        backBtn.setOnAction(e -> showMainView());
+        backBtn.setVisible(false);
+        backBtn.setManaged(false);
+
         Button downloadTemplateBtn = new Button("Download CSV Template");
         downloadTemplateBtn.setOnAction(e -> onDownloadTemplate());
 
@@ -263,7 +270,7 @@ public class CanvasRubricGuiApp extends Application {
         grid.add(new Label("CSV File:"), 0, row);
         grid.add(csvPathField, 1, row);
 
-        HBox csvButtons = new HBox(5, browseBtn, pasteCsvFromClipboardBtn, showPreviewBtn);
+        HBox csvButtons = new HBox(5, browseBtn, pasteCsvFromClipboardBtn, showPreviewBtn, backBtn);
         grid.add(csvButtons, 2, row++);
 
         csvPathField
@@ -425,6 +432,10 @@ public class CanvasRubricGuiApp extends Application {
             showPreviewBtn.setVisible(true);
             showPreviewBtn.setManaged(true);
         }
+        if (backBtn != null) {
+            backBtn.setVisible(false);
+            backBtn.setManaged(false);
+        }
     }
 
     private TableView<RubricRow> buildRubricPreviewTable(int maxRatings) {
@@ -531,20 +542,11 @@ public class CanvasRubricGuiApp extends Application {
                         });
     }
 
-    private BorderPane buildFullHeightPreviewPane() {
+    private Pane buildFullHeightPreviewPane() {
 
         BorderPane pane = new BorderPane();
 
-        pane.setPadding(new Insets(10));
-
-        Label label = new Label("Rubric Preview");
-        pane.setTop(label);
-
-        pane.setCenter(rubricPreviewTable);
-
-        Button backBtn = new Button("Back to Main View");
-        backBtn.setOnAction(e -> showMainView());
-        pane.setBottom(backBtn);
+        pane.setCenter(wrapInCard("Rubric Preview", rubricPreviewTable));
 
         return pane;
     }
@@ -606,6 +608,11 @@ public class CanvasRubricGuiApp extends Application {
                                             if (showPreviewBtn != null) {
                                                 showPreviewBtn.setVisible(false);
                                                 showPreviewBtn.setManaged(false);
+                                            }
+                                            if (backBtn != null) {
+
+                                                backBtn.setVisible(true);
+                                                backBtn.setManaged(true);
                                             }
                                             rubricPreviewTable =
                                                     buildRubricPreviewTable(finalMaxRatings);

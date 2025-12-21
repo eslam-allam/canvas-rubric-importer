@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "io.github.eslam_allam.canvas"
-version = "1.0.6"
+version = "1.0.7"
 
 val appName = "CanvasRubricImporter"
 val appVersion = (project.version.takeIf { it != "unspecified" } ?: "1.0.0").toString()

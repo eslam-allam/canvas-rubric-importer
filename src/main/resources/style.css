@@ -99,10 +99,22 @@
     -fx-font-size: 12px;
     -fx-font-weight: 600;
 }
-
-.table-row-cell {
-    -fx-background-color: transparent;
+.rubric-preview-table .table-row-cell {
+    -fx-padding: 0;
 }
+
+
+
+.table-row-cell:odd {
+
+
+.rating-cell-label {
+    -fx-font-size: 12px;
+}
+
+
+
+
 
 .table-row-cell:odd {
     -fx-background-color: #f9fafb;

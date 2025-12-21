@@ -79,6 +79,8 @@ public final class CsvRubricParser {
                                 : "";
 
                 List<RubricModels.Rating> ratings = new ArrayList<>();
+                boolean hasZeroRating = false;
+                boolean hasPositiveRating = false;
                 for (RatingHeaderDetector.RatingGroup g : ratingGroups) {
                     String name = normalizeText(getField(record, headers, g.nameColumn()));
                     String ptsRaw = getField(record, headers, g.pointsColumn());
@@ -93,6 +95,11 @@ public final class CsvRubricParser {
                                 "Row " + rowNum + ": " + g.nameColumn() + " empty.");
                     }
 
+                    if (longDesc.isBlank()) {
+                        throw new IllegalArgumentException(
+                                "Row " + rowNum + ": " + g.descColumn() + " empty.");
+                    }
+
                     double ratingPts =
                             parseDouble(
                                     ptsRaw,
@@ -101,11 +108,36 @@ public final class CsvRubricParser {
                                             + ": "
                                             + g.pointsColumn()
                                             + " must be numeric.");
+
+                    if (ratingPts == 0.0) {
+                        hasZeroRating = true;
+                    }
+                    if (ratingPts > 0.0) {
+                        hasPositiveRating = true;
+                    }
+
                     ratings.add(new RubricModels.Rating(name, ratingPts, longDesc));
                 }
 
-                if (ratings.size() < 2) {
-                    throw new IllegalArgumentException("Row " + rowNum + ": need >=2 ratings.");
+                if (ratings.isEmpty()) {
+                    throw new IllegalArgumentException(
+                            "Row " + rowNum + ": criterion must have at least one rating.");
+                }
+
+                if (!hasZeroRating) {
+                    throw new IllegalArgumentException(
+                            "Row "
+                                    + rowNum
+                                    + ": criterion must include at least one rating with 0"
+                                    + " points.");
+                }
+
+                if (!hasPositiveRating) {
+                    throw new IllegalArgumentException(
+                            "Row "
+                                    + rowNum
+                                    + ": criterion must include at least one rating with"
+                                    + " positive points.");
                 }
 
                 double criterionPoints =

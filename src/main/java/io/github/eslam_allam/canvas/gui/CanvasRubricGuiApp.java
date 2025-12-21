@@ -427,52 +427,83 @@ public class CanvasRubricGuiApp extends Application {
         }
     }
 
-    private TableView<RubricRow> buildRubricPreviewTable(
-            int maxRatings, List<String> ratingHeaders) {
+    private TableView<RubricRow> buildRubricPreviewTable(int maxRatings) {
+
         TableView<RubricRow> table = new TableView<>();
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        table.getStyleClass().add("rubric-preview-table");
 
         TableColumn<RubricRow, String> critCol = new TableColumn<>("Criterion");
         critCol.setCellValueFactory(
                 cell -> new ReadOnlyStringWrapper(cell.getValue().getCriterion()));
-
-        TableColumn<RubricRow, String> descCol = new TableColumn<>("Description");
-        descCol.setCellValueFactory(
-                cell -> new ReadOnlyStringWrapper(cell.getValue().getDescription()));
+        enableWrappingCellFactory(critCol);
 
         TableColumn<RubricRow, String> pointsCol = new TableColumn<>("Points");
         pointsCol.setCellValueFactory(
                 cell -> new ReadOnlyStringWrapper(cell.getValue().getPoints()));
-
-        enableWrappingCellFactory(critCol);
-        enableWrappingCellFactory(descCol);
         enableWrappingCellFactory(pointsCol);
 
-        java.util.List<TableColumn<RubricRow, String>> ratingCols = new java.util.ArrayList<>();
+        java.util.List<TableColumn<RubricRow, RubricModels.Rating>> ratingCols =
+                new java.util.ArrayList<>();
         for (int i = 0; i < maxRatings; i++) {
             final int idx = i;
-            String header =
-                    (ratingHeaders != null && idx < ratingHeaders.size())
-                            ? ratingHeaders.get(idx)
-                            : ("Rating " + (i + 1));
 
-            TableColumn<RubricRow, String> ratingCol = new TableColumn<>(header);
+            TableColumn<RubricRow, RubricModels.Rating> ratingCol = new TableColumn<>("");
             ratingCol.setCellValueFactory(
                     cell -> {
                         java.util.List<RubricModels.Rating> ratings = cell.getValue().getRatings();
                         if (idx >= ratings.size()) {
-                            return new ReadOnlyStringWrapper("");
+                            return new javafx.beans.property.ReadOnlyObjectWrapper<>(null);
                         }
-                        RubricModels.Rating r = ratings.get(idx);
-                        String text = r.getLongDescription();
-                        return new ReadOnlyStringWrapper(text == null ? "" : text);
+                        return new javafx.beans.property.ReadOnlyObjectWrapper<>(ratings.get(idx));
                     });
-            enableWrappingCellFactory(ratingCol);
+
+            ratingCol.setCellFactory(
+                    col ->
+                            new TableCell<>() {
+                                private final Text text = new Text();
+
+                                {
+                                    text.wrappingWidthProperty()
+                                            .bind(col.widthProperty().subtract(10));
+                                    setGraphic(text);
+                                    setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+                                }
+
+                                @Override
+                                protected void updateItem(RubricModels.Rating item, boolean empty) {
+                                    super.updateItem(item, empty);
+                                    if (empty || item == null) {
+                                        text.setText("");
+                                    } else {
+                                        String title =
+                                                item.getDescription() == null
+                                                        ? ""
+                                                        : item.getDescription();
+                                        String pts = Double.toString(item.getPoints());
+                                        String headerText =
+                                                title.isEmpty() ? pts : (title + " (" + pts + ")");
+                                        String desc =
+                                                item.getLongDescription() == null
+                                                        ? ""
+                                                        : item.getLongDescription();
+
+                                        if (desc.isEmpty()) {
+                                            text.setText(headerText);
+                                        } else {
+                                            text.setText(headerText + "\n\n" + desc);
+                                        }
+                                    }
+                                }
+                            });
+
             ratingCols.add(ratingCol);
         }
 
-        table.getColumns().addAll(critCol, descCol, pointsCol);
-        table.getColumns().addAll(ratingCols);
+        TableColumn<RubricRow, RubricModels.Rating> ratingsParentCol = new TableColumn<>("Ratings");
+        ratingsParentCol.getColumns().addAll(ratingCols);
+
+        table.getColumns().addAll(critCol, ratingsParentCol, pointsCol);
         return table;
     }
 
@@ -485,13 +516,14 @@ public class CanvasRubricGuiApp extends Application {
                             {
                                 text.wrappingWidthProperty().bind(col.widthProperty().subtract(10));
                                 setGraphic(text);
+                                setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
                             }
 
                             @Override
                             protected void updateItem(String item, boolean empty) {
                                 super.updateItem(item, empty);
                                 if (empty || item == null) {
-                                    text.setText(null);
+                                    text.setText("");
                                 } else {
                                     text.setText(item);
                                 }
@@ -518,6 +550,7 @@ public class CanvasRubricGuiApp extends Application {
     }
 
     private void loadRubricPreview(Path csvPath) {
+
         setStatus("Loading preview...");
         new Thread(
                         () -> {
@@ -564,7 +597,6 @@ public class CanvasRubricGuiApp extends Application {
                                 }
 
                                 final int finalMaxRatings = maxRatings;
-                                final List<String> finalRatingHeaders = ratingHeaders;
                                 Platform.runLater(
                                         () -> {
                                             if (showPreviewBtn != null) {
@@ -572,8 +604,7 @@ public class CanvasRubricGuiApp extends Application {
                                                 showPreviewBtn.setManaged(false);
                                             }
                                             rubricPreviewTable =
-                                                    buildRubricPreviewTable(
-                                                            finalMaxRatings, finalRatingHeaders);
+                                                    buildRubricPreviewTable(finalMaxRatings);
                                             rubricPreviewTable.getItems().setAll(rows);
                                             root.setCenter(buildFullHeightPreviewPane());
                                             setStatus("Preview loaded");

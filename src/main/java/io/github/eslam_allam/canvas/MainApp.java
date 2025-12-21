@@ -21,10 +21,10 @@ public class MainApp {
             System.exit(1);
         }
 
-        if (gui) {
-            CanvasRubricGuiApp.main(stripFlag(args, "--gui"));
-        } else {
+        if (cli) {
             CliApp.main(stripFlag(args, "--cli"));
+        } else {
+            CanvasRubricGuiApp.main(stripFlag(args, "--gui"));
         }
     }
 

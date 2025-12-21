@@ -7,6 +7,12 @@ plugins {
 group = "io.github.eslam_allam.canvas"
 version = "1.0.6"
 
+val appName = "CanvasRubricImporter"
+val appVersion = (project.version.takeIf { it != "unspecified" } ?: "1.0.0").toString()
+val mainClassName = "io.github.eslam_allam.canvas.MainApp"
+val mainModule = "io.github.eslam_allam.canvas"
+val mainClassModule = mainModule + "/" + mainClassName
+
 repositories {
     mavenCentral()
 }
@@ -51,7 +57,7 @@ java {
 
 application {
     // Modular application: specify module/name instead of only the main class
-    mainModule.set("io.github.eslam_allam.canvas/io.github.eslam_allam.canvas.MainApp")
+    mainModule.set(mainClassModule)
 }
 
 
@@ -59,7 +65,7 @@ tasks.register<JavaExec>("runCli") {
     group = "application"
     description = "Run the CLI application"
     classpath = sourceSets["main"].runtimeClasspath
-    mainClass.set("io.github.eslam_allam.canvas.MainApp")
+    mainClass.set(mainClassName)
     args("--cli")
 }
 
@@ -67,8 +73,7 @@ tasks.register<JavaExec>("runGui") {
     group = "application"
     description = "Run the JavaFX GUI application"
     classpath = sourceSets["main"].runtimeClasspath
-    mainClass.set("io.github.eslam_allam.canvas.MainApp")
-    args("--gui")
+    mainClass.set(mainClassName)
 }
 
 
@@ -76,14 +81,11 @@ tasks.register<JavaExec>("runGui") {
 tasks.jar {
     manifest {
         attributes(
-            "Main-Class" to "io.github.eslam_allam.canvas.MainApp"
+            "Main-Class" to mainClassName
         )
     }
 }
 
-val appName = "CanvasRubricImporter"
-val appVersion = (project.version.takeIf { it != "unspecified" } ?: "1.0.0").toString()
-val mainClassName = "io.github.eslam_allam.canvas.MainApp"
 
 val jpackageOutputDir = layout.buildDirectory.dir("jpackage")
 val jlinkImageDir = layout.buildDirectory.dir("image")
@@ -113,7 +115,6 @@ tasks.register<org.gradle.api.tasks.Exec>("jlinkImage") {
         if (imageDirFile.exists()) {
             imageDirFile.deleteRecursively()
         }
-        // Do not create the directory here; let jlink create it.
     }
 
     // Resolve all runtime dependencies (3rd-party libraries, not including the app JAR)
@@ -135,7 +136,7 @@ tasks.register<org.gradle.api.tasks.Exec>("jlinkImage") {
     commandLine(
         "jlink",
         "--module-path", fullModulePath,
-        "--add-modules", "io.github.eslam_allam.canvas",
+        "--add-modules", mainModule,
         "--output", jlinkImageDir.get().asFile.absolutePath,
         "--strip-debug",
         "--compress", "2",
@@ -173,7 +174,7 @@ tasks.register<org.gradle.api.tasks.Exec>("packageDeb") {
         "--name", appName,
         "--app-version", appVersion,
         "--runtime-image", imageDir.absolutePath,
-        "--module", "io.github.eslam_allam.canvas/io.github.eslam_allam.canvas.gui.CanvasRubricGuiLauncher",
+        "--module", mainClassModule,
         "--dest", debOutputDir.get().asFile.absolutePath,
         "--icon", "icons/png/canvas_rubric_importer 128x128.png",
         "--vendor", "Canvas Rubric Importer",
@@ -214,7 +215,7 @@ tasks.register<org.gradle.api.tasks.Exec>("packageRpm") {
         "--name", appName,
         "--app-version", appVersion,
         "--runtime-image", imageDir.absolutePath,
-        "--module", "io.github.eslam_allam.canvas/io.github.eslam_allam.canvas.gui.CanvasRubricGuiLauncher",
+        "--module", mainClassModule,
         "--dest", rpmOutputDir.get().asFile.absolutePath,
         "--icon", "icons/png/canvas_rubric_importer 128x128.png",
         "--vendor", "Canvas Rubric Importer",
@@ -252,8 +253,7 @@ tasks.register<org.gradle.api.tasks.Exec>("packageMsi") {
         "--name", appName,
         "--app-version", appVersion,
         "--runtime-image", imageDir.absolutePath,
-        // Windows: always launch GUI via dedicated launcher
-        "--module", "io.github.eslam_allam.canvas/io.github.eslam_allam.canvas.gui.CanvasRubricGuiLauncher",
+        "--module", mainClassModule,
         "--dest", msiOutputDir.get().asFile.absolutePath,
         "--icon", "icons/canvas_rubric_importer.ico",
         "--vendor", "Canvas Rubric Importer",

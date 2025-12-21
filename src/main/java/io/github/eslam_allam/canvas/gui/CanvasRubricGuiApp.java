@@ -507,7 +507,6 @@ public class CanvasRubricGuiApp extends Application {
         return table;
     }
 
-
     private void enableWrappingCellFactory(TableColumn<RubricRow, String> column) {
         column.setCellFactory(
                 col ->
@@ -532,7 +531,6 @@ public class CanvasRubricGuiApp extends Application {
                         });
     }
 
-
     private BorderPane buildFullHeightPreviewPane() {
 
         BorderPane pane = new BorderPane();
@@ -550,8 +548,6 @@ public class CanvasRubricGuiApp extends Application {
 
         return pane;
     }
-
-
 
     private void loadRubricPreview(Path csvPath) {
 
@@ -604,7 +600,6 @@ public class CanvasRubricGuiApp extends Application {
 
                                 final int finalMaxRatings = maxRatings;
                                 final double finalTotalPoints = totalPoints;
-                                
 
                                 Platform.runLater(
                                         () -> {
@@ -622,8 +617,7 @@ public class CanvasRubricGuiApp extends Application {
                                                             "Total",
                                                             "",
                                                             Double.toString(finalTotalPoints),
-                                                            java.util.Collections.emptyList()
-                                                            );
+                                                            java.util.Collections.emptyList());
                                             rubricPreviewTable.getItems().add(totalRow);
 
                                             root.setCenter(buildFullHeightPreviewPane());

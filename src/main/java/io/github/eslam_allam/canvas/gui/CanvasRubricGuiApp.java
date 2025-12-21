@@ -507,6 +507,7 @@ public class CanvasRubricGuiApp extends Application {
         return table;
     }
 
+
     private void enableWrappingCellFactory(TableColumn<RubricRow, String> column) {
         column.setCellFactory(
                 col ->
@@ -531,6 +532,7 @@ public class CanvasRubricGuiApp extends Application {
                         });
     }
 
+
     private BorderPane buildFullHeightPreviewPane() {
 
         BorderPane pane = new BorderPane();
@@ -548,6 +550,8 @@ public class CanvasRubricGuiApp extends Application {
 
         return pane;
     }
+
+
 
     private void loadRubricPreview(Path csvPath) {
 
@@ -567,6 +571,7 @@ public class CanvasRubricGuiApp extends Application {
                                 List<String> ratingHeaders = new ArrayList<>();
                                 boolean headerInitialized = false;
 
+                                double totalPoints = 0;
                                 for (RubricModels.Criterion c : criteria) {
                                     List<RubricModels.Rating> ratings = c.getRatings();
                                     maxRatings = Math.max(maxRatings, ratings.size());
@@ -588,6 +593,7 @@ public class CanvasRubricGuiApp extends Application {
                                                     .max()
                                                     .orElse(0.0);
 
+                                    totalPoints += maxPoints;
                                     rows.add(
                                             new RubricRow(
                                                     c.getName(),
@@ -597,6 +603,9 @@ public class CanvasRubricGuiApp extends Application {
                                 }
 
                                 final int finalMaxRatings = maxRatings;
+                                final double finalTotalPoints = totalPoints;
+                                
+
                                 Platform.runLater(
                                         () -> {
                                             if (showPreviewBtn != null) {
@@ -606,6 +615,17 @@ public class CanvasRubricGuiApp extends Application {
                                             rubricPreviewTable =
                                                     buildRubricPreviewTable(finalMaxRatings);
                                             rubricPreviewTable.getItems().setAll(rows);
+
+                                            // Add total row at the end
+                                            RubricRow totalRow =
+                                                    new RubricRow(
+                                                            "Total",
+                                                            "",
+                                                            Double.toString(finalTotalPoints),
+                                                            java.util.Collections.emptyList()
+                                                            );
+                                            rubricPreviewTable.getItems().add(totalRow);
+
                                             root.setCenter(buildFullHeightPreviewPane());
                                             setStatus("Preview loaded");
                                         });

@@ -4,11 +4,9 @@ plugins {
     id("com.diffplug.spotless") version "8.1.0"
 }
 
-
 repositories {
     mavenCentral()
 }
-
 
 data class AppMeta(
     val name: String,
@@ -16,24 +14,24 @@ data class AppMeta(
     val vendor: String,
     val id: String,
     val maintainerName: String,
-    val maintainerEmail: String
+    val maintainerEmail: String,
 )
 
-val appMeta = AppMeta(
-    name = property("app.name").toString(),
-    version = property("app.version").toString(),
-    vendor = property("app.vendor").toString(),
-    id = property("app.id").toString(),
-    maintainerName = property("app.maintainer.name").toString(),
-    maintainerEmail = property("app.maintainer.email").toString()
-)
+val appMeta =
+    AppMeta(
+        name = property("app.name").toString(),
+        version = property("app.version").toString(),
+        vendor = property("app.vendor").toString(),
+        id = property("app.id").toString(),
+        maintainerName = property("app.maintainer.name").toString(),
+        maintainerEmail = property("app.maintainer.email").toString(),
+    )
 
 version = appMeta.version
 group = appMeta.id
 
 val mainClassName = "${appMeta.id}.MainApp"
-val mainClassModule = "${appMeta.id}/${mainClassName}"
-
+val mainClassModule = "${appMeta.id}/$mainClassName"
 
 val generatedSrcDir =
     layout.buildDirectory.dir("generated/sources/appinfo/java/main")
@@ -43,12 +41,13 @@ val generateAppInfo by tasks.registering {
 
     doLast {
         val baseDir = generatedSrcDir.get().asFile
-        val packageDir = File(
-            baseDir,
-            appMeta.id.replace(".", "/")
-        )
+        val packageDir =
+            File(
+                baseDir,
+                appMeta.id.replace(".", "/"),
+            )
         packageDir.mkdirs()
-        file("${packageDir}/AppInfo.java").writeText(
+        file("$packageDir/AppInfo.java").writeText(
             """
             package ${appMeta.id};
 
@@ -61,20 +60,18 @@ val generateAppInfo by tasks.registering {
                 public static final String MAINTAINER_EMAIL = "${appMeta.maintainerEmail}";
                 private AppInfo() {}
             }
-            """.trimIndent()
+            """.trimIndent(),
         )
     }
 }
 
 sourceSets["main"].java.srcDir(
-    generatedSrcDir
+    generatedSrcDir,
 )
 
 tasks.named("compileJava") {
     dependsOn(generateAppInfo)
 }
-
-
 
 spotless {
 
@@ -125,7 +122,6 @@ application {
     mainModule.set(mainClassModule)
 }
 
-
 tasks.register<JavaExec>("runCli") {
     group = "application"
     description = "Run the CLI application"
@@ -141,23 +137,22 @@ tasks.register<JavaExec>("runGui") {
     mainClass.set(mainClassName)
 }
 
-
-
 tasks.jar {
     manifest {
         attributes(
-            "Main-Class" to mainClassName
+            "Main-Class" to mainClassName,
         )
     }
 }
-
 
 val jpackageOutputDir = layout.buildDirectory.dir("jpackage")
 val jlinkImageDir = layout.buildDirectory.dir("image")
 
 // Choose the platform-specific javafx-jmods directory
 fun javafxJmodsDirForCurrentOs(): String {
-    val os = org.gradle.internal.os.OperatingSystem.current()
+    val os =
+        org.gradle.internal.os.OperatingSystem
+            .current()
     val base = "javafx-jmods"
     return when {
         os.isWindows -> "$base/windows"
@@ -188,29 +183,36 @@ tasks.register<org.gradle.api.tasks.Exec>("jlinkImage") {
     val depsOnPath = dependencyJars.joinToString(File.pathSeparator) { it.absolutePath }
 
     // The application jar, which contains the named module io.github.eslam_allam.canvas
-    val libsDir = layout.buildDirectory.dir("libs").get().asFile
+    val libsDir =
+        layout.buildDirectory
+            .dir("libs")
+            .get()
+            .asFile
     val appJar = File(libsDir, "${project.name}-${project.version}.jar")
 
     // Compose full module-path: platform-specific javafx-jmods + all dependency jars + the app jar
     val jmodsDir = javafxJmodsDirForCurrentOs()
-    val fullModulePath = listOf(jmodsDir, depsOnPath, appJar.absolutePath)
-        .filter { it.isNotBlank() }
-        .joinToString(File.pathSeparator)
+    val fullModulePath =
+        listOf(jmodsDir, depsOnPath, appJar.absolutePath)
+            .filter { it.isNotBlank() }
+            .joinToString(File.pathSeparator)
 
     // Use local jmods directory plus all runtime jars and the app jar on the module path
     commandLine(
         "jlink",
-        "--module-path", fullModulePath,
-        "--add-modules", appMeta.id,
-        "--output", jlinkImageDir.get().asFile.absolutePath,
+        "--module-path",
+        fullModulePath,
+        "--add-modules",
+        appMeta.id,
+        "--output",
+        jlinkImageDir.get().asFile.absolutePath,
         "--strip-debug",
-        "--compress", "2",
+        "--compress",
+        "2",
         "--no-header-files",
-        "--no-man-pages"
+        "--no-man-pages",
     )
 }
-
-
 
 // Build DEB (Linux) using jpackage and a custom runtime image from jlink
 val debOutputDir = jpackageOutputDir.map { it.dir("deb") }
@@ -235,23 +237,29 @@ tasks.register<org.gradle.api.tasks.Exec>("packageDeb") {
 
     commandLine(
         "jpackage",
-        "--type", "deb",
-        "--name", appMeta.name,
-        "--app-version", appMeta.version,
-        "--runtime-image", imageDir.absolutePath,
-        "--module", mainClassModule,
-        "--dest", debOutputDir.get().asFile.absolutePath,
-        "--icon", "icons/png/canvas_rubric_importer 128x128.png",
-        "--vendor", appMeta.vendor,
-
+        "--type",
+        "deb",
+        "--name",
+        appMeta.name,
+        "--app-version",
+        appMeta.version,
+        "--runtime-image",
+        imageDir.absolutePath,
+        "--module",
+        mainClassModule,
+        "--dest",
+        debOutputDir.get().asFile.absolutePath,
+        "--icon",
+        "icons/png/canvas_rubric_importer 128x128.png",
+        "--vendor",
+        appMeta.vendor,
         "--linux-shortcut",
-        "--linux-menu-group", "Canvas Tools",
-        "--linux-deb-maintainer", appMeta.maintainerName + " " + appMeta.maintainerEmail
-
+        "--linux-menu-group",
+        "Canvas Tools",
+        "--linux-deb-maintainer",
+        appMeta.maintainerName + " " + appMeta.maintainerEmail,
     )
 }
-
-
 
 // Build RPM (Linux) using jpackage and a custom runtime image from jlink
 val rpmOutputDir = jpackageOutputDir.map { it.dir("rpm") }
@@ -276,18 +284,25 @@ tasks.register<org.gradle.api.tasks.Exec>("packageRpm") {
 
     commandLine(
         "jpackage",
-        "--type", "rpm",
-        "--name", appMeta.name,
-        "--app-version", appMeta.version,
-        "--runtime-image", imageDir.absolutePath,
-        "--module", mainClassModule,
-        "--dest", rpmOutputDir.get().asFile.absolutePath,
-        "--icon", "icons/png/canvas_rubric_importer 128x128.png",
-        "--vendor", appMeta.vendor,
-
+        "--type",
+        "rpm",
+        "--name",
+        appMeta.name,
+        "--app-version",
+        appMeta.version,
+        "--runtime-image",
+        imageDir.absolutePath,
+        "--module",
+        mainClassModule,
+        "--dest",
+        rpmOutputDir.get().asFile.absolutePath,
+        "--icon",
+        "icons/png/canvas_rubric_importer 128x128.png",
+        "--vendor",
+        appMeta.vendor,
         "--linux-shortcut",
-        "--linux-menu-group", "Canvas Tools"
-
+        "--linux-menu-group",
+        "Canvas Tools",
     )
 }
 
@@ -314,16 +329,25 @@ tasks.register<org.gradle.api.tasks.Exec>("packageMsi") {
 
     commandLine(
         "jpackage",
-        "--type", "msi",
-        "--name", appMeta.name,
-        "--app-version", appMeta.version,
-        "--runtime-image", imageDir.absolutePath,
-        "--module", mainClassModule,
-        "--dest", msiOutputDir.get().asFile.absolutePath,
-        "--icon", "icons/canvas_rubric_importer.ico",
-        "--vendor", appMeta.vendor,
+        "--type",
+        "msi",
+        "--name",
+        appMeta.name,
+        "--app-version",
+        appMeta.version,
+        "--runtime-image",
+        imageDir.absolutePath,
+        "--module",
+        mainClassModule,
+        "--dest",
+        msiOutputDir.get().asFile.absolutePath,
+        "--icon",
+        "icons/canvas_rubric_importer.ico",
+        "--vendor",
+        appMeta.vendor,
         "--win-shortcut",
         "--win-menu",
-        "--win-menu-group", "Canvas Tools"
+        "--win-menu-group",
+        "Canvas Tools",
     )
 }

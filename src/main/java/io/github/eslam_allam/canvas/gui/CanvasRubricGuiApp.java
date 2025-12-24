@@ -1,6 +1,7 @@
 package io.github.eslam_allam.canvas.gui;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.github.eslam_allam.canvas.AppInfo;
 import io.github.eslam_allam.canvas.core.CanvasClient;
 import io.github.eslam_allam.canvas.core.CsvRubricParser;
 import io.github.eslam_allam.canvas.core.RubricModels;
@@ -66,7 +67,7 @@ public class CanvasRubricGuiApp extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        primaryStage.setTitle("Canvas Rubric Uploader");
+        primaryStage.setTitle(AppInfo.NAME);
 
         root = new BorderPane();
         root.getStyleClass().add("app-root");

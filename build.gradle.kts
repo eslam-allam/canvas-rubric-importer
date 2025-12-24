@@ -91,6 +91,7 @@ spotless {
         googleJavaFormat().aosp().reflowLongStrings().skipJavadocFormatting()
         // fix formatting of type annotations
         formatAnnotations()
+        targetExclude("build/generated/**")
     }
 }
 

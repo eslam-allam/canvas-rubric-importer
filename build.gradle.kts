@@ -74,6 +74,8 @@ tasks.named("compileJava") {
     dependsOn(generateAppInfo)
 }
 
+
+
 spotless {
 
     format("misc") {
@@ -92,6 +94,11 @@ spotless {
         // fix formatting of type annotations
         formatAnnotations()
         targetExclude("build/generated/**")
+    }
+
+    kotlinGradle {
+        // Apply the same formatting rules
+        ktlint()
     }
 }
 

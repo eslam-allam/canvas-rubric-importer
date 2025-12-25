@@ -1103,7 +1103,7 @@ public class CanvasRubricGuiApp extends Application {
     private void showError(String title, String msg) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
-        alert.setHeaderText(title);
+        alert.setHeaderText(null);
         alert.setContentText(msg);
         alert.showAndWait();
     }

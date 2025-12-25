@@ -252,6 +252,11 @@ public class CanvasRubricGuiApp extends Application {
         Button downloadRubricBtn = new Button("Download Rubric as CSV");
         downloadRubricBtn.setOnAction(e -> onDownloadRubricCsv());
 
+        Button copyRubricBtn = new Button("Copy Rubric as CSV");
+        copyRubricBtn.setOnAction(e -> onCopyRubricCsv());
+
+        HBox canvasRubricButtons = new HBox(5, downloadRubricBtn, copyRubricBtn);
+
         Button createBtn = new Button("Create Rubric");
 
         createBtn.setOnAction(e -> onCreate());
@@ -294,7 +299,7 @@ public class CanvasRubricGuiApp extends Application {
         grid.add(downloadTemplateBtn, 2, row++);
 
         grid.add(copyTemplateBtn, 2, row++);
-        grid.add(downloadRubricBtn, 2, row++);
+        grid.add(canvasRubricButtons, 2, row++);
 
         grid.add(freeFormCommentsCheck, 0, row++, 2, 1);
         grid.add(useForGradingCheck, 0, row++, 2, 1);
@@ -893,6 +898,51 @@ public class CanvasRubricGuiApp extends Application {
             showError(
                     "Error", "Failed to save clipboard CSV to temporary file: " + ex.getMessage());
         }
+    }
+
+    private void onCopyRubricCsv() {
+        String token = tokenField.getText().trim();
+        if (token.isEmpty()) {
+            showError("Error", "You must enter an access token first.");
+            return;
+        }
+        String courseId = courseIdField.getText().trim();
+        if (courseId.isEmpty()) {
+            showError("Error", "Please select a course.");
+            return;
+        }
+        String assignmentId = assignmentIdField.getText().trim();
+        if (assignmentId.isEmpty()) {
+            showError("Error", "Please select an assignment.");
+            return;
+        }
+
+        setStatus("Downloading rubric...");
+        getCanvasRubricCSV(
+                token,
+                courseId,
+                assignmentId,
+                result -> {
+                    if (result.status() == ResultStatus.FAILURE) {
+                        Platform.runLater(
+                                () -> {
+                                    setStatus("Error");
+                                    showError("Failed to fetch rubric", result.data());
+                                });
+                        return;
+                    } else {
+
+                        Platform.runLater(
+                                () -> {
+                                    ClipboardContent content = new ClipboardContent();
+                                    content.putString(result.data());
+
+                                    Clipboard.getSystemClipboard().setContent(content);
+                                    setStatus("Copied to clipboard");
+                                    showInfo("Done", "Rubric copied to clipboard successfully.");
+                                });
+                    }
+                });
     }
 
     private void onDownloadRubricCsv() {

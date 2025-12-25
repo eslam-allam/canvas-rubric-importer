@@ -31,11 +31,15 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Paint;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -89,7 +93,7 @@ public class CanvasRubricGuiApp extends Application {
         mainCenterPane.getItems().add(buildAssignmentsPane());
 
         mainCenterPane.setDividerPositions(0.5);
-        root.setCenter(mainCenterPane);
+        root.setCenter(wrapInCard("Courses & Assignments", mainCenterPane));
 
         VBox bottomBox = new VBox(10);
         bottomBox.getChildren().add(wrapInCard("Rubric Configuration", buildRubricPane()));
@@ -323,6 +327,10 @@ public class CanvasRubricGuiApp extends Application {
         Label titleLabel = new Label(title);
         titleLabel.getStyleClass().add("section-title");
 
+        if (content instanceof TableView) {
+            VBox.setVgrow(content, javafx.scene.layout.Priority.ALWAYS);
+        }
+
         box.getChildren().addAll(titleLabel, content);
         return box;
     }
@@ -438,7 +446,7 @@ public class CanvasRubricGuiApp extends Application {
     }
 
     private void showMainView() {
-        root.setCenter(mainCenterPane);
+        root.setCenter(wrapInCard("Courses & Assignments", mainCenterPane));
         if (showPreviewBtn != null) {
             showPreviewBtn.setVisible(true);
             showPreviewBtn.setManaged(true);

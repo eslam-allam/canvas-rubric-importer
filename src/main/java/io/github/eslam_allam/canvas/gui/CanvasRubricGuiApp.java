@@ -5,15 +5,20 @@ import io.github.eslam_allam.canvas.AppInfo;
 import io.github.eslam_allam.canvas.core.CanvasClient;
 import io.github.eslam_allam.canvas.core.CsvRubricParser;
 import io.github.eslam_allam.canvas.core.RubricModels;
+import io.github.eslam_allam.canvas.core.model.Result;
+import io.github.eslam_allam.canvas.core.model.ResultStatus;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.prefs.Preferences;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -667,6 +672,87 @@ public class CanvasRubricGuiApp extends Application {
         return templateHeader(2);
     }
 
+    private void getCanvasRubricCSV(
+            String token, String courseID, String assignmentID, Consumer<Result<String>> callback) {
+        new Thread(
+                        () -> {
+                            try {
+                                CanvasClient client =
+                                        new CanvasClient(baseUrlField.getText().trim(), token);
+                                JsonNode assignment =
+                                        client.getAssignmentWithRubric(courseID, assignmentID);
+                                JsonNode rubric = assignment.path("rubric");
+                                if (rubric.isMissingNode()
+                                        || !rubric.isArray()
+                                        || rubric.isEmpty()) {
+
+                                    callback.accept(
+                                            new Result<>(ResultStatus.FAILURE, "No rubric found."));
+                                    return;
+                                }
+
+                                int maxRatings = 0;
+                                for (JsonNode crit : rubric) {
+                                    JsonNode ratings = crit.path("ratings");
+                                    if (ratings.isArray()) {
+                                        maxRatings = Math.max(maxRatings, ratings.size());
+                                    }
+                                }
+                                if (maxRatings == 0) {
+                                    callback.accept(
+                                            new Result<>(
+                                                    ResultStatus.FAILURE,
+                                                    "The rubric has no ratings."));
+                                    return;
+                                }
+
+                                List<String> header = templateHeader(maxRatings);
+                                List<List<String>> rows = new ArrayList<>();
+
+                                for (JsonNode crit : rubric) {
+                                    String description = crit.path("description").asText("");
+                                    String longDesc = crit.path("long_description").asText("");
+
+                                    JsonNode ratings = crit.path("ratings");
+                                    List<String> row = new ArrayList<>();
+                                    row.add(description);
+                                    row.add(longDesc);
+
+                                    int count = ratings.isArray() ? ratings.size() : 0;
+                                    for (int i = 0; i < maxRatings; i++) {
+                                        if (i < count) {
+                                            JsonNode r = ratings.get(i);
+                                            row.add(r.path("description").asText(""));
+                                            row.add(r.path("points").asText(""));
+                                            row.add(r.path("long_description").asText(""));
+                                        } else {
+                                            row.add("");
+                                            row.add("");
+                                            row.add("");
+                                        }
+                                    }
+                                    rows.add(row);
+                                }
+
+                                StringWriter sw = new StringWriter();
+                                try (PrintWriter writer = new PrintWriter(sw)) {
+                                    writeCsvRow(writer, header);
+                                    for (List<String> row : rows) {
+                                        writeCsvRow(writer, row);
+                                    }
+                                }
+
+                                callback.accept(new Result<>(ResultStatus.SUCCESS, sw.toString()));
+
+                            } catch (Exception ex) {
+                                callback.accept(
+                                        new Result<>(ResultStatus.FAILURE, ex.getMessage()));
+                            }
+                        },
+                        "download-and-convert-rubric")
+                .start();
+    }
+
     private void onDownloadTemplate() {
         String rubricTitle = titleField.getText().trim();
         if (rubricTitle.isEmpty()) {
@@ -836,97 +922,37 @@ public class CanvasRubricGuiApp extends Application {
         }
 
         setStatus("Downloading rubric...");
-        new Thread(
-                        () -> {
-                            try {
-                                CanvasClient client =
-                                        new CanvasClient(baseUrlField.getText().trim(), token);
-                                JsonNode assignment =
-                                        client.getAssignmentWithRubric(courseId, assignmentId);
-                                JsonNode rubric = assignment.path("rubric");
-                                if (rubric.isMissingNode()
-                                        || !rubric.isArray()
-                                        || rubric.isEmpty()) {
-
-                                    Platform.runLater(
-                                            () -> {
-                                                setStatus("No rubric");
-                                                showError(
-                                                        "Error", "This assignment has no rubric.");
-                                            });
-                                    return;
-                                }
-
-                                int maxRatings = 0;
-                                for (JsonNode crit : rubric) {
-                                    JsonNode ratings = crit.path("ratings");
-                                    if (ratings.isArray()) {
-                                        maxRatings = Math.max(maxRatings, ratings.size());
-                                    }
-                                }
-                                if (maxRatings == 0) {
-                                    Platform.runLater(
-                                            () -> {
-                                                setStatus("No ratings");
-                                                showError("Error", "The rubric has no ratings.");
-                                            });
-                                    return;
-                                }
-
-                                List<String> header = templateHeader(maxRatings);
-                                List<List<String>> rows = new ArrayList<>();
-
-                                for (JsonNode crit : rubric) {
-                                    String description = crit.path("description").asText("");
-                                    String longDesc = crit.path("long_description").asText("");
-
-                                    JsonNode ratings = crit.path("ratings");
-                                    List<String> row = new ArrayList<>();
-                                    row.add(description);
-                                    row.add(longDesc);
-
-                                    int count = ratings.isArray() ? ratings.size() : 0;
-                                    for (int i = 0; i < maxRatings; i++) {
-                                        if (i < count) {
-                                            JsonNode r = ratings.get(i);
-                                            row.add(r.path("description").asText(""));
-                                            row.add(r.path("points").asText(""));
-                                            row.add(r.path("long_description").asText(""));
-                                        } else {
-                                            row.add("");
-                                            row.add("");
-                                            row.add("");
-                                        }
-                                    }
-                                    rows.add(row);
-                                }
-
-                                try (PrintWriter writer = new PrintWriter(new FileWriter(file))) {
-                                    writeCsvRow(writer, header);
-                                    for (List<String> row : rows) {
-                                        writeCsvRow(writer, row);
-                                    }
-                                }
-
-                                Platform.runLater(
-                                        () -> {
-                                            setStatus("Done");
-                                            showInfo(
-                                                    "Rubric downloaded",
-                                                    "Saved rubric CSV to:\n"
-                                                            + file.getAbsolutePath());
-                                        });
-
-                            } catch (Exception ex) {
-                                Platform.runLater(
-                                        () -> {
-                                            setStatus("Error");
-                                            showError("Error", ex.getMessage());
-                                        });
-                            }
-                        },
-                        "download-rubric")
-                .start();
+        getCanvasRubricCSV(
+                token,
+                courseId,
+                assignmentId,
+                result -> {
+                    if (result.status() == ResultStatus.FAILURE) {
+                        Platform.runLater(
+                                () -> {
+                                    setStatus("Error");
+                                    showError("Failed to Download Rubric", result.data());
+                                });
+                    } else {
+                        try {
+                            Files.writeString(file.toPath(), result.data(), StandardCharsets.UTF_8);
+                        } catch (IOException ex) {
+                            Platform.runLater(
+                                    () -> {
+                                        setStatus("Error");
+                                        showError("Failed to Save Rubric", ex.getMessage());
+                                    });
+                            return;
+                        }
+                        Platform.runLater(
+                                () -> {
+                                    setStatus("Done");
+                                    showInfo(
+                                            "Rubric Downloaded",
+                                            "Saved rubric CSV to:\n" + file.getAbsolutePath());
+                                });
+                    }
+                });
     }
 
     private void onCreate() {
@@ -1027,7 +1053,7 @@ public class CanvasRubricGuiApp extends Application {
     private void showError(String title, String msg) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
-        alert.setHeaderText(null);
+        alert.setHeaderText(title);
         alert.setContentText(msg);
         alert.showAndWait();
     }

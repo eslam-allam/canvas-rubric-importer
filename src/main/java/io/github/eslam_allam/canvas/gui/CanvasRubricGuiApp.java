@@ -91,6 +91,7 @@ public class CanvasRubricGuiApp extends Application {
 
         mainCenterPane.setDividerPositions(0.5);
         root.setCenter(mainCenterPane);
+        BorderPane.setMargin(mainCenterPane, new Insets(5, 0, 5, 0));
 
         VBox bottomBox = new VBox(10);
         bottomBox.getChildren().add(wrapInCard("Rubric Configuration", buildRubricPane()));
@@ -647,7 +648,11 @@ public class CanvasRubricGuiApp extends Application {
                                                             java.util.Collections.emptyList());
                                             rubricPreviewTable.getItems().add(totalRow);
 
-                                            root.setCenter(buildFullHeightPreviewPane());
+                                            Pane previewPane = buildFullHeightPreviewPane();
+                                            root.setCenter(previewPane);
+
+                                            BorderPane.setMargin(
+                                                    previewPane, new Insets(5, 0, 5, 0));
                                             setStatus("Preview loaded");
                                         });
 

@@ -296,16 +296,20 @@ public class CanvasRubricGuiApp extends Application {
                             showPreviewBtn.setManaged(hasCsv);
                         });
 
-        grid.add(downloadTemplateBtn, 2, row++);
+        HBox templateButtons = new HBox(5, downloadTemplateBtn, copyTemplateBtn);
+        grid.add(templateButtons, 2, row++);
 
-        grid.add(copyTemplateBtn, 2, row++);
         grid.add(canvasRubricButtons, 2, row++);
 
-        grid.add(freeFormCommentsCheck, 0, row++, 2, 1);
-        grid.add(useForGradingCheck, 0, row++, 2, 1);
-        grid.add(hideScoreTotalCheck, 0, row++, 2, 1);
-        grid.add(syncPointsCheck, 0, row++, 3, 1);
-        grid.add(decodeHtmlCheck, 0, row++, 3, 1);
+        VBox rubricOptions =
+                new VBox(
+                        5,
+                        new HBox(
+                                10, freeFormCommentsCheck, useForGradingCheck, hideScoreTotalCheck),
+                        new HBox(10, syncPointsCheck, decodeHtmlCheck));
+        grid.add(rubricOptions, 0, row, 6, 3);
+        GridPane.setMargin(rubricOptions, new Insets(5));
+        row += 3;
 
         grid.add(statusLabel, 0, row++, 3, 1);
 

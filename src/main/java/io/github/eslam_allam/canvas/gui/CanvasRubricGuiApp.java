@@ -85,11 +85,12 @@ public class CanvasRubricGuiApp extends Application {
         loadSettings();
 
         mainCenterPane = new SplitPane();
+        mainCenterPane.getStyleClass().add("section-card");
         mainCenterPane.getItems().add(buildCoursesPane());
         mainCenterPane.getItems().add(buildAssignmentsPane());
 
         mainCenterPane.setDividerPositions(0.5);
-        root.setCenter(wrapInCard("Courses & Assignments", mainCenterPane));
+        root.setCenter(mainCenterPane);
 
         VBox bottomBox = new VBox(10);
         bottomBox.getChildren().add(wrapInCard("Rubric Configuration", buildRubricPane()));
@@ -132,7 +133,7 @@ public class CanvasRubricGuiApp extends Application {
     }
 
     private VBox buildCoursesPane() {
-        VBox box = new VBox(5);
+        VBox box = new VBox(10);
         box.setPadding(new Insets(5));
         Label label = new Label("Courses");
 
@@ -170,7 +171,7 @@ public class CanvasRubricGuiApp extends Application {
     }
 
     private VBox buildAssignmentsPane() {
-        VBox box = new VBox(5);
+        VBox box = new VBox(10);
         box.setPadding(new Insets(5));
         Label label = new Label("Assignments");
 
@@ -446,7 +447,7 @@ public class CanvasRubricGuiApp extends Application {
     }
 
     private void showMainView() {
-        root.setCenter(wrapInCard("Courses & Assignments", mainCenterPane));
+        root.setCenter(mainCenterPane);
         if (showPreviewBtn != null) {
             showPreviewBtn.setVisible(true);
             showPreviewBtn.setManaged(true);

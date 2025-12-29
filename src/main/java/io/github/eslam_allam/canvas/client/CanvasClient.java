@@ -2,6 +2,9 @@ package io.github.eslam_allam.canvas.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.github.eslam_allam.canvas.model.canvas.Assignment;
+import io.github.eslam_allam.canvas.model.canvas.Course;
 import io.github.eslam_allam.canvas.model.canvas.RubricModels;
 import java.io.IOException;
 import java.net.URI;
@@ -57,7 +60,7 @@ public final class CanvasClient {
         }
     }
 
-    public JsonNode createRubric(String courseId, Map<String, String> formFields)
+    public RubricModels.Created createRubric(String courseId, Map<String, String> formFields)
             throws IOException, InterruptedException {
         String url = String.format("%s/api/v1/courses/%s/rubrics", baseUrl, courseId);
         String formBody = toFormBody(formFields);
@@ -75,21 +78,21 @@ public final class CanvasClient {
             throw new IOException(
                     "Rubric create failed: HTTP " + response.statusCode() + "\n" + response.body());
         }
-        return objectMapper.readTree(response.body());
+        return objectMapper.readValue(response.body(), RubricModels.Created.class);
     }
 
-    public List<JsonNode> listCourses() throws IOException, InterruptedException {
+    public List<Course> listCourses() throws IOException, InterruptedException {
         String url = baseUrl + "/api/v1/courses?enrollment_state=active";
-        return getPaginated(url);
+        return getPaginated(url, Course.class);
     }
 
-    public List<JsonNode> listAssignments(String courseId)
+    public List<Assignment> listAssignments(String courseId)
             throws IOException, InterruptedException {
         String url = String.format("%s/api/v1/courses/%s/assignments", baseUrl, courseId);
-        return getPaginated(url);
+        return getPaginated(url, Assignment.class);
     }
 
-    public JsonNode getAssignmentWithRubric(String courseId, String assignmentId)
+    public Assignment getAssignmentWithRubric(String courseId, String assignmentId)
             throws IOException, InterruptedException {
         String url =
                 String.format(
@@ -110,10 +113,10 @@ public final class CanvasClient {
                             + " "
                             + response.body());
         }
-        return objectMapper.readTree(response.body());
+        return objectMapper.readValue(response.body(), Assignment.class);
     }
 
-    private List<JsonNode> getPaginated(String url) throws IOException, InterruptedException {
+    private <T> List<T> getPaginated(String url, Class<T> clazz) throws IOException, InterruptedException {
         var result = new java.util.ArrayList<JsonNode>();
         String nextUrl = url;
         while (nextUrl != null) {
@@ -144,7 +147,8 @@ public final class CanvasClient {
 
             nextUrl = parseNextLink(response.headers().firstValue("Link").orElse(""));
         }
-        return result;
+        return objectMapper.convertValue(result, 
+            objectMapper.getTypeFactory().constructCollectionType(List.class, clazz));
     }
 
     private static String parseNextLink(String linkHeader) {

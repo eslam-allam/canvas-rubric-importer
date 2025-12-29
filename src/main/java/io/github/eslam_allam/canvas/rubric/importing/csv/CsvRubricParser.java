@@ -117,7 +117,7 @@ public final class CsvRubricParser {
                         hasPositiveRating = true;
                     }
 
-                    ratings.add(new RubricModels.Rating(name, ratingPts, longDesc));
+                    ratings.add(new RubricModels.Rating("", name, ratingPts, longDesc));
                 }
 
                 if (ratings.isEmpty()) {

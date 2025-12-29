@@ -19,6 +19,7 @@ module io.github.eslam_allam.canvas {
     // JDK modules
     requires java.net.http;
     requires java.prefs;
+    requires com.fasterxml.jackson.annotation;
 
     // Allow JavaFX / reflection to access GUI internals
     opens io.github.eslam_allam.canvas.gui;

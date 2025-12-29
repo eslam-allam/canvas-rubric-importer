@@ -100,8 +100,8 @@ public final class CliApp {
         }
 
         var response = client.createRubric(courseId, formFields);
-        var rubricId = response.path("rubric").path("id").asText();
-        var assocId = response.path("rubric_association").path("id").asText();
+        var rubricId = response.rubric();
+        var assocId = response.rubricAssociation();
         System.out.println("Created rubric + association.");
         System.out.println("Rubric ID: " + rubricId);
         System.out.println("Association ID: " + assocId);

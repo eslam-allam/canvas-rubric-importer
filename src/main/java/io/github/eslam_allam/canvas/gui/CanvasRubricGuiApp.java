@@ -5,6 +5,8 @@ import io.github.eslam_allam.canvas.AppInfo;
 import io.github.eslam_allam.canvas.client.CanvasClient;
 import io.github.eslam_allam.canvas.domain.Result;
 import io.github.eslam_allam.canvas.domain.ResultStatus;
+import io.github.eslam_allam.canvas.model.canvas.Assignment;
+import io.github.eslam_allam.canvas.model.canvas.Course;
 import io.github.eslam_allam.canvas.model.canvas.RubricModels;
 import io.github.eslam_allam.canvas.rubric.importing.csv.CsvRubricParser;
 import io.github.eslam_allam.canvas.rubric.importing.csv.RatingHeaderDetector;
@@ -46,8 +48,8 @@ public class CanvasRubricGuiApp extends Application {
 
     private TextField baseUrlField;
     private PasswordField tokenField;
-    private ListView<JsonNode> courseListView;
-    private ListView<JsonNode> assignmentListView;
+    private ListView<Course> courseListView;
+    private ListView<Assignment> assignmentListView;
     private TextField courseIdField;
     private TextField assignmentIdField;
     private TextField titleField;
@@ -66,9 +68,9 @@ public class CanvasRubricGuiApp extends Application {
     private BorderPane root;
     private SplitPane mainCenterPane;
 
-    private ObservableList<JsonNode> courses = FXCollections.observableArrayList();
+    private ObservableList<Course> courses = FXCollections.observableArrayList();
 
-    private ObservableList<JsonNode> assignments = FXCollections.observableArrayList();
+    private ObservableList<Assignment> assignments = FXCollections.observableArrayList();
 
     private final Preferences prefs = Preferences.userNodeForPackage(CanvasRubricGuiApp.class);
 
@@ -145,13 +147,13 @@ public class CanvasRubricGuiApp extends Application {
                 list ->
                         new ListCell<>() {
                             @Override
-                            protected void updateItem(JsonNode item, boolean empty) {
+                            protected void updateItem(Course item, boolean empty) {
                                 super.updateItem(item, empty);
                                 if (empty || item == null) {
                                     setText(null);
                                 } else {
-                                    String name = item.path("name").asText("");
-                                    String code = item.path("course_code").asText("");
+                                    String name = item.name();
+                                    String code = item.courseCode();
                                     if (!code.isEmpty()) {
                                         setText(name + " [" + code + "]");
                                     } else {
@@ -183,12 +185,12 @@ public class CanvasRubricGuiApp extends Application {
                 list ->
                         new ListCell<>() {
                             @Override
-                            protected void updateItem(JsonNode item, boolean empty) {
+                            protected void updateItem(Assignment item, boolean empty) {
                                 super.updateItem(item, empty);
                                 if (empty || item == null) {
                                     setText(null);
                                 } else {
-                                    String name = item.path("name").asText("");
+                                    String name = item.name();
                                     setText(name);
                                 }
                             }
@@ -364,7 +366,7 @@ public class CanvasRubricGuiApp extends Application {
                         () -> {
                             try {
                                 CanvasClient client = new CanvasClient(baseUrl, token);
-                                List<JsonNode> list = client.listCourses();
+                                List<Course> list = client.listCourses();
                                 Platform.runLater(
                                         () -> {
                                             courses.setAll(list);
@@ -378,11 +380,11 @@ public class CanvasRubricGuiApp extends Application {
                 .start();
     }
 
-    private void onCourseSelected(JsonNode course) {
+    private void onCourseSelected(Course course) {
         if (course == null) {
             return;
         }
-        String id = course.path("id").asText("");
+        String id = course.id().toString();
         courseIdField.setText(id);
         assignments.clear();
         assignmentIdField.clear();
@@ -405,7 +407,7 @@ public class CanvasRubricGuiApp extends Application {
                         () -> {
                             try {
                                 CanvasClient client = new CanvasClient(baseUrl, token);
-                                List<JsonNode> list = client.listAssignments(courseId);
+                                List<Assignment> list = client.listAssignments(courseId);
                                 Platform.runLater(
                                         () -> {
                                             assignments.setAll(list);
@@ -419,13 +421,13 @@ public class CanvasRubricGuiApp extends Application {
                 .start();
     }
 
-    private void onAssignmentSelected(JsonNode assignment) {
+    private void onAssignmentSelected(Assignment assignment) {
         if (assignment == null) {
             return;
         }
-        String id = assignment.path("id").asText("");
+        String id = assignment.id().toString();
         assignmentIdField.setText(id);
-        String name = assignment.path("name").asText(id);
+        String name = assignment.name();
         titleField.setText("Rubric for " + name);
     }
 
@@ -697,11 +699,10 @@ public class CanvasRubricGuiApp extends Application {
                             try {
                                 CanvasClient client =
                                         new CanvasClient(baseUrlField.getText().trim(), token);
-                                JsonNode assignment =
+                                Assignment assignment =
                                         client.getAssignmentWithRubric(courseID, assignmentID);
-                                JsonNode rubric = assignment.path("rubric");
-                                if (rubric.isMissingNode()
-                                        || !rubric.isArray()
+                                List<RubricModels.Criteria> rubric = assignment.rubric();
+                                if (rubric == null
                                         || rubric.isEmpty()) {
 
                                     callback.accept(
@@ -710,9 +711,9 @@ public class CanvasRubricGuiApp extends Application {
                                 }
 
                                 int maxRatings = 0;
-                                for (JsonNode crit : rubric) {
-                                    JsonNode ratings = crit.path("ratings");
-                                    if (ratings.isArray()) {
+                                for (RubricModels.Criteria crit : rubric) {
+                                    List<RubricModels.Rating> ratings = crit.ratings();
+                                    if (ratings != null && !ratings.isEmpty()) {
                                         maxRatings = Math.max(maxRatings, ratings.size());
                                     }
                                 }
@@ -727,22 +728,22 @@ public class CanvasRubricGuiApp extends Application {
                                 List<String> header = templateHeader(maxRatings);
                                 List<List<String>> rows = new ArrayList<>();
 
-                                for (JsonNode crit : rubric) {
-                                    String description = crit.path("description").asText("");
-                                    String longDesc = crit.path("long_description").asText("");
+                                for (RubricModels.Criteria crit : rubric) {
+                                    String description = crit.description();
+                                    String longDesc = crit.longDescription();
 
-                                    JsonNode ratings = crit.path("ratings");
+                                    List<RubricModels.Rating> ratings = crit.ratings();
                                     List<String> row = new ArrayList<>();
                                     row.add(description);
                                     row.add(longDesc);
 
-                                    int count = ratings.isArray() ? ratings.size() : 0;
+                                    int count = ratings != null ? ratings.size() : 0;
                                     for (int i = 0; i < maxRatings; i++) {
                                         if (i < count) {
-                                            JsonNode r = ratings.get(i);
-                                            row.add(r.path("description").asText(""));
-                                            row.add(r.path("points").asText(""));
-                                            row.add(r.path("long_description").asText(""));
+                                            RubricModels.Rating r = ratings.get(i);
+                                            row.add(r.description());
+                                            row.add(r.points().toString());
+                                            row.add(r.longDescription());
                                         } else {
                                             row.add("");
                                             row.add("");
@@ -1080,10 +1081,10 @@ public class CanvasRubricGuiApp extends Application {
                                 }
 
                                 Platform.runLater(() -> setStatus("Creating rubric..."));
-                                JsonNode response = client.createRubric(courseId, formFields);
-                                String rubricId = response.path("rubric").path("id").asText("");
+                                RubricModels.Created response = client.createRubric(courseId, formFields);
+                                String rubricId = response.rubric().toString();
                                 String assocId =
-                                        response.path("rubric_association").path("id").asText("");
+                                        response.rubricAssociation().toString();
 
                                 Platform.runLater(
                                         () -> {

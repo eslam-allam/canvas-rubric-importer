@@ -1,4 +1,4 @@
-package io.github.eslam_allam.canvas.model;
+package io.github.eslam_allam.canvas.domain;
 
 public enum ResultStatus {
     SUCCESS,

@@ -1,6 +1,6 @@
 package io.github.eslam_allam.canvas.rubric.importing.csv;
 
-import io.github.eslam_allam.canvas.model.RubricModels;
+import io.github.eslam_allam.canvas.model.canvas.RubricModels;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

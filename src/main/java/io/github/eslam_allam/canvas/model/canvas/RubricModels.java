@@ -1,4 +1,4 @@
-package io.github.eslam_allam.canvas.model;
+package io.github.eslam_allam.canvas.model.canvas;
 
 import java.util.List;
 

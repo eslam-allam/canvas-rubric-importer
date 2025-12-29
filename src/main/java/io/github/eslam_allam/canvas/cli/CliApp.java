@@ -1,7 +1,7 @@
 package io.github.eslam_allam.canvas.cli;
 
 import io.github.eslam_allam.canvas.client.CanvasClient;
-import io.github.eslam_allam.canvas.model.RubricModels;
+import io.github.eslam_allam.canvas.model.canvas.RubricModels;
 import io.github.eslam_allam.canvas.rubric.importing.csv.CsvRubricParser;
 import java.nio.file.Path;
 import java.util.List;

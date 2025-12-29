@@ -1,7 +1,10 @@
-package io.github.eslam_allam.canvas.service;
+package io.github.eslam_allam.canvas.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.github.eslam_allam.canvas.model.RubricModels;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -15,14 +18,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 
-public final class CanvasService {
+public final class CanvasClient {
 
     private final String baseUrl;
     private final String token;
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
 
-    public CanvasService(String baseUrl, String token) {
+    public CanvasClient(String baseUrl, String token) {
         this.baseUrl = baseUrl.replaceAll("/+$", "");
         this.token = token;
         this.httpClient = HttpClient.newBuilder().build();
@@ -186,20 +189,20 @@ public final class CanvasService {
             String critId = "_" + i;
             String base = "rubric[criteria][" + i + "]";
             data.put(base + "[id]", critId);
-            data.put(base + "[description]", c.getName());
-            data.put(base + "[long_description]", c.getDescription());
-            data.put(base + "[points]", Double.toString(c.getPoints()));
+            data.put(base + "[description]", c.name());
+            data.put(base + "[long_description]", c.description());
+            data.put(base + "[points]", Double.toString(c.points()));
             data.put(base + "[criterion_use_range]", "false");
 
-            List<RubricModels.Rating> ratings = c.getRatings();
+            List<RubricModels.Rating> ratings = c.ratings();
             for (int j = 0; j < ratings.size(); j++) {
                 RubricModels.Rating r = ratings.get(j);
                 String rbase = base + "[ratings][" + j + "]";
                 data.put(rbase + "[id]", "r" + i + "_" + j);
                 data.put(rbase + "[criterion_id]", critId);
-                data.put(rbase + "[description]", r.getDescription());
-                data.put(rbase + "[long_description]", r.getLongDescription());
-                data.put(rbase + "[points]", Double.toString(r.getPoints()));
+                data.put(rbase + "[description]", r.description());
+                data.put(rbase + "[long_description]", r.longDescription());
+                data.put(rbase + "[points]", Double.toString(r.points()));
             }
         }
 

@@ -1,10 +1,11 @@
 package io.github.eslam_allam.canvas.cli;
 
-import io.github.eslam_allam.canvas.service.CanvasService;
-import io.github.eslam_allam.canvas.service.CsvRubricParserService;
-import io.github.eslam_allam.canvas.service.RubricModels;
 import java.nio.file.Path;
 import java.util.List;
+
+import io.github.eslam_allam.canvas.client.CanvasClient;
+import io.github.eslam_allam.canvas.model.RubricModels;
+import io.github.eslam_allam.canvas.rubric.importing.csv.CsvRubricParser;
 
 public final class CliApp {
 
@@ -67,13 +68,13 @@ public final class CliApp {
             }
         }
 
-        CsvRubricParserService parser = new CsvRubricParserService(decodeHtml);
+        CsvRubricParser parser = new CsvRubricParser(decodeHtml);
 
-        CsvRubricParserService.ParsedRubric parsed = parser.parse(csvPath);
+        CsvRubricParser.ParsedRubric parsed = parser.parse(csvPath);
         List<RubricModels.Criterion> criteria = parsed.criteria();
         double totalPoints = parsed.totalPoints();
 
-        CanvasService client = new CanvasService(baseUrl, token);
+        CanvasClient client = new CanvasClient(baseUrl, token);
         var formFields =
                 client.buildFormFieldsForRubricCreate(
                         title,

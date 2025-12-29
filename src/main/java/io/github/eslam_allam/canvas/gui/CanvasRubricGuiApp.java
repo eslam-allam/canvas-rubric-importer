@@ -2,13 +2,14 @@ package io.github.eslam_allam.canvas.gui;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.eslam_allam.canvas.AppInfo;
-import io.github.eslam_allam.canvas.service.RatingHeaderDetector;
-import io.github.eslam_allam.canvas.service.RatingHeaderDetector.RatingGroup;
-import io.github.eslam_allam.canvas.service.CanvasClient;
-import io.github.eslam_allam.canvas.service.CsvRubricParser;
-import io.github.eslam_allam.canvas.service.RubricModels;
+import io.github.eslam_allam.canvas.client.CanvasClient;
 import io.github.eslam_allam.canvas.model.Result;
 import io.github.eslam_allam.canvas.model.ResultStatus;
+import io.github.eslam_allam.canvas.model.RubricModels;
+import io.github.eslam_allam.canvas.rubric.importing.csv.CsvRubricParser;
+import io.github.eslam_allam.canvas.rubric.importing.csv.RatingHeaderDetector;
+import io.github.eslam_allam.canvas.rubric.importing.csv.RatingHeaderDetector.RatingGroup;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -511,16 +512,16 @@ public class CanvasRubricGuiApp extends Application {
                                         text.setText("");
                                     } else {
                                         String title =
-                                                item.getDescription() == null
+                                                item.description() == null
                                                         ? ""
-                                                        : item.getDescription();
-                                        String pts = Double.toString(item.getPoints());
+                                                        : item.description();
+                                        String pts = Double.toString(item.points());
                                         String headerText =
                                                 title.isEmpty() ? pts : (title + " (" + pts + ")");
                                         String desc =
-                                                item.getLongDescription() == null
+                                                item.longDescription() == null
                                                         ? ""
-                                                        : item.getLongDescription();
+                                                        : item.longDescription();
 
                                         if (desc.isEmpty()) {
                                             text.setText(headerText);
@@ -594,15 +595,15 @@ public class CanvasRubricGuiApp extends Application {
 
                                 double totalPoints = 0;
                                 for (RubricModels.Criterion c : criteria) {
-                                    List<RubricModels.Rating> ratings = c.getRatings();
+                                    List<RubricModels.Rating> ratings = c.ratings();
                                     maxRatings = Math.max(maxRatings, ratings.size());
 
                                     if (!headerInitialized && !ratings.isEmpty()) {
                                         for (RubricModels.Rating r : ratings) {
                                             ratingHeaders.add(
-                                                    r.getDescription()
+                                                    r.description()
                                                             + " ("
-                                                            + r.getPoints()
+                                                            + r.points()
                                                             + ")");
                                         }
                                         headerInitialized = true;
@@ -610,15 +611,15 @@ public class CanvasRubricGuiApp extends Application {
 
                                     double maxPoints =
                                             ratings.stream()
-                                                    .mapToDouble(RubricModels.Rating::getPoints)
+                                                    .mapToDouble(RubricModels.Rating::points)
                                                     .max()
                                                     .orElse(0.0);
 
                                     totalPoints += maxPoints;
                                     rows.add(
                                             new RubricRow(
-                                                    c.getName(),
-                                                    c.getDescription(),
+                                                    c.name(),
+                                                    c.description(),
                                                     Double.toString(maxPoints),
                                                     ratings));
                                 }

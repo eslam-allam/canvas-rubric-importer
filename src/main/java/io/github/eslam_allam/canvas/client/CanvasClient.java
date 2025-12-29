@@ -2,9 +2,7 @@ package io.github.eslam_allam.canvas.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.github.eslam_allam.canvas.model.RubricModels;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;

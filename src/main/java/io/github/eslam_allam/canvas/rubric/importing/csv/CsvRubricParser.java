@@ -1,5 +1,6 @@
 package io.github.eslam_allam.canvas.rubric.importing.csv;
 
+import io.github.eslam_allam.canvas.model.RubricModels;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -11,8 +12,6 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.text.StringEscapeUtils;
-
-import io.github.eslam_allam.canvas.model.RubricModels;
 
 public final class CsvRubricParser {
 
@@ -143,10 +142,7 @@ public final class CsvRubricParser {
                 }
 
                 double criterionPoints =
-                        ratings.stream()
-                                .mapToDouble(RubricModels.Rating::points)
-                                .max()
-                                .orElse(0.0);
+                        ratings.stream().mapToDouble(RubricModels.Rating::points).max().orElse(0.0);
 
                 criteria.add(new RubricModels.Criterion(criterion, desc, criterionPoints, ratings));
                 total += criterionPoints;

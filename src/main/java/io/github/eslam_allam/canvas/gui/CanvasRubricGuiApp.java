@@ -9,7 +9,6 @@ import io.github.eslam_allam.canvas.model.RubricModels;
 import io.github.eslam_allam.canvas.rubric.importing.csv.CsvRubricParser;
 import io.github.eslam_allam.canvas.rubric.importing.csv.RatingHeaderDetector;
 import io.github.eslam_allam.canvas.rubric.importing.csv.RatingHeaderDetector.RatingGroup;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -601,10 +600,7 @@ public class CanvasRubricGuiApp extends Application {
                                     if (!headerInitialized && !ratings.isEmpty()) {
                                         for (RubricModels.Rating r : ratings) {
                                             ratingHeaders.add(
-                                                    r.description()
-                                                            + " ("
-                                                            + r.points()
-                                                            + ")");
+                                                    r.description() + " (" + r.points() + ")");
                                         }
                                         headerInitialized = true;
                                     }
@@ -866,9 +862,7 @@ public class CanvasRubricGuiApp extends Application {
         String[] headerArray = headerCells.toArray(String[]::new);
 
         // Reuse RatingHeaderDetector to validate rating groups
-        java.util.List<RatingGroup>
-                ratingGroups =
-                        RatingHeaderDetector.detect(headerArray);
+        java.util.List<RatingGroup> ratingGroups = RatingHeaderDetector.detect(headerArray);
 
         if (ratingGroups.size() < 2) {
             showError(

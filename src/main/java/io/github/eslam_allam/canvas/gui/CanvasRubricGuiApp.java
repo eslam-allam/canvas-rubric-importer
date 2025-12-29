@@ -2,11 +2,13 @@ package io.github.eslam_allam.canvas.gui;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.eslam_allam.canvas.AppInfo;
-import io.github.eslam_allam.canvas.core.CanvasClient;
-import io.github.eslam_allam.canvas.core.CsvRubricParser;
-import io.github.eslam_allam.canvas.core.RubricModels;
-import io.github.eslam_allam.canvas.core.model.Result;
-import io.github.eslam_allam.canvas.core.model.ResultStatus;
+import io.github.eslam_allam.canvas.service.RatingHeaderDetector;
+import io.github.eslam_allam.canvas.service.RatingHeaderDetector.RatingGroup;
+import io.github.eslam_allam.canvas.service.CanvasClient;
+import io.github.eslam_allam.canvas.service.CsvRubricParser;
+import io.github.eslam_allam.canvas.service.RubricModels;
+import io.github.eslam_allam.canvas.model.Result;
+import io.github.eslam_allam.canvas.model.ResultStatus;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -863,9 +865,9 @@ public class CanvasRubricGuiApp extends Application {
         String[] headerArray = headerCells.toArray(String[]::new);
 
         // Reuse RatingHeaderDetector to validate rating groups
-        java.util.List<io.github.eslam_allam.canvas.core.RatingHeaderDetector.RatingGroup>
+        java.util.List<RatingGroup>
                 ratingGroups =
-                        io.github.eslam_allam.canvas.core.RatingHeaderDetector.detect(headerArray);
+                        RatingHeaderDetector.detect(headerArray);
 
         if (ratingGroups.size() < 2) {
             showError(
@@ -880,7 +882,7 @@ public class CanvasRubricGuiApp extends Application {
         java.util.Set<String> allowed = new java.util.HashSet<>();
         allowed.add("criterion");
         allowed.add("criterion_desc");
-        for (io.github.eslam_allam.canvas.core.RatingHeaderDetector.RatingGroup g : ratingGroups) {
+        for (RatingGroup g : ratingGroups) {
             allowed.add(g.nameColumn());
             allowed.add(g.pointsColumn());
             allowed.add(g.descColumn());

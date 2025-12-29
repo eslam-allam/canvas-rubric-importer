@@ -1,4 +1,4 @@
-package io.github.eslam_allam.canvas.core;
+package io.github.eslam_allam.canvas.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,14 +15,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 
-public final class CanvasClient {
+public final class CanvasService {
 
     private final String baseUrl;
     private final String token;
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
 
-    public CanvasClient(String baseUrl, String token) {
+    public CanvasService(String baseUrl, String token) {
         this.baseUrl = baseUrl.replaceAll("/+$", "");
         this.token = token;
         this.httpClient = HttpClient.newBuilder().build();

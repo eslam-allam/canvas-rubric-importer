@@ -1,4 +1,4 @@
-package io.github.eslam_allam.canvas.core;
+package io.github.eslam_allam.canvas.service;
 
 import java.util.ArrayList;
 import java.util.List;

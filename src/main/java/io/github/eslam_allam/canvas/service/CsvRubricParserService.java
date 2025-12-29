@@ -1,4 +1,4 @@
-package io.github.eslam_allam.canvas.core;
+package io.github.eslam_allam.canvas.service;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,17 +12,17 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.text.StringEscapeUtils;
 
-public final class CsvRubricParser {
+public final class CsvRubricParserService {
 
     public record ParsedRubric(List<RubricModels.Criterion> criteria, double totalPoints) {}
 
     private final boolean decodeHtmlEntities;
 
-    public CsvRubricParser() {
+    public CsvRubricParserService() {
         this(true);
     }
 
-    public CsvRubricParser(boolean decodeHtmlEntities) {
+    public CsvRubricParserService(boolean decodeHtmlEntities) {
         this.decodeHtmlEntities = decodeHtmlEntities;
     }
 

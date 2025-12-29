@@ -1,4 +1,4 @@
-package io.github.eslam_allam.canvas.core;
+package io.github.eslam_allam.canvas.service;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -6,13 +6,13 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public final class RatingHeaderDetector {
+public final class RatingHeaderDetectorService {
 
     public record RatingGroup(String nameColumn, String pointsColumn, String descColumn) {}
 
     private static final Pattern RATING_NAME_PATTERN = Pattern.compile("rating(\\d+)");
 
-    private RatingHeaderDetector() {}
+    private RatingHeaderDetectorService() {}
 
     public static List<RatingGroup> detect(String[] header) {
         List<int[]> ratingNameCols = new ArrayList<>();

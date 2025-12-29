@@ -3,7 +3,7 @@ module io.github.eslam_allam.canvas {
     exports io.github.eslam_allam.canvas;
 
     // Public APIs used by CLI/GUI
-    exports io.github.eslam_allam.canvas.core;
+    exports io.github.eslam_allam.canvas.service;
     exports io.github.eslam_allam.canvas.cli;
     exports io.github.eslam_allam.canvas.gui;
 

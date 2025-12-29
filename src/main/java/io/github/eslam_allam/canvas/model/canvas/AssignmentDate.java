@@ -12,11 +12,6 @@ public record AssignmentDate(
         // (Optional) whether this date represents the default due date
         Boolean base,
         String title,
-        @JsonProperty("due_at")
-        String dueAt,
-        @JsonProperty("unlock_at")
-        String unlockAt,
-        @JsonProperty("lock_at")
-        String lockAt
-) {
-}
+        @JsonProperty("due_at") String dueAt,
+        @JsonProperty("unlock_at") String unlockAt,
+        @JsonProperty("lock_at") String lockAt) {}

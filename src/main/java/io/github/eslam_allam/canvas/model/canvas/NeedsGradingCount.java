@@ -8,10 +8,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record NeedsGradingCount(
         // The section ID
-        @JsonProperty("section_id")
-        String sectionId,
+        @JsonProperty("section_id") String sectionId,
         // Number of submissions that need grading
-        @JsonProperty("needs_grading_count")
-        Integer needsGradingCount
-) {
-}
+        @JsonProperty("needs_grading_count") Integer needsGradingCount) {}

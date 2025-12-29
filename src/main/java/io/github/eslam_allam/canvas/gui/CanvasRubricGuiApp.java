@@ -1,6 +1,5 @@
 package io.github.eslam_allam.canvas.gui;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import io.github.eslam_allam.canvas.AppInfo;
 import io.github.eslam_allam.canvas.client.CanvasClient;
 import io.github.eslam_allam.canvas.domain.Result;
@@ -702,8 +701,7 @@ public class CanvasRubricGuiApp extends Application {
                                 Assignment assignment =
                                         client.getAssignmentWithRubric(courseID, assignmentID);
                                 List<RubricModels.Criteria> rubric = assignment.rubric();
-                                if (rubric == null
-                                        || rubric.isEmpty()) {
+                                if (rubric == null || rubric.isEmpty()) {
 
                                     callback.accept(
                                             new Result<>(ResultStatus.FAILURE, "No rubric found."));
@@ -1081,10 +1079,10 @@ public class CanvasRubricGuiApp extends Application {
                                 }
 
                                 Platform.runLater(() -> setStatus("Creating rubric..."));
-                                RubricModels.Created response = client.createRubric(courseId, formFields);
+                                RubricModels.Created response =
+                                        client.createRubric(courseId, formFields);
                                 String rubricId = response.rubric().toString();
-                                String assocId =
-                                        response.rubricAssociation().toString();
+                                String assocId = response.rubricAssociation().toString();
 
                                 Platform.runLater(
                                         () -> {

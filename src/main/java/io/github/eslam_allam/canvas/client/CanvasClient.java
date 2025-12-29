@@ -2,7 +2,6 @@ package io.github.eslam_allam.canvas.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.github.eslam_allam.canvas.model.canvas.Assignment;
 import io.github.eslam_allam.canvas.model.canvas.Course;
 import io.github.eslam_allam.canvas.model.canvas.RubricModels;
@@ -116,7 +115,8 @@ public final class CanvasClient {
         return objectMapper.readValue(response.body(), Assignment.class);
     }
 
-    private <T> List<T> getPaginated(String url, Class<T> clazz) throws IOException, InterruptedException {
+    private <T> List<T> getPaginated(String url, Class<T> clazz)
+            throws IOException, InterruptedException {
         var result = new java.util.ArrayList<JsonNode>();
         String nextUrl = url;
         while (nextUrl != null) {
@@ -147,8 +147,8 @@ public final class CanvasClient {
 
             nextUrl = parseNextLink(response.headers().firstValue("Link").orElse(""));
         }
-        return objectMapper.convertValue(result, 
-            objectMapper.getTypeFactory().constructCollectionType(List.class, clazz));
+        return objectMapper.convertValue(
+                result, objectMapper.getTypeFactory().constructCollectionType(List.class, clazz));
     }
 
     private static String parseNextLink(String linkHeader) {

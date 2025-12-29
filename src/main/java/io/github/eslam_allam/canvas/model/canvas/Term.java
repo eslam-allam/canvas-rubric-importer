@@ -9,9 +9,5 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public record Term(
         Long id,
         String name,
-        @JsonProperty("start_at")
-        String startAt,
-        @JsonProperty("end_at")
-        String endAt
-) {
-}
+        @JsonProperty("start_at") String startAt,
+        @JsonProperty("end_at") String endAt) {}

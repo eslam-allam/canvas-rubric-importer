@@ -14,12 +14,8 @@ public record ScoreStatistic(
         // Mean score
         Integer mean,
         // Upper quartile score
-        @JsonProperty("upper_q")
-        Integer upperQ,
+        @JsonProperty("upper_q") Integer upperQ,
         // Median score
         Integer median,
         // Lower quartile score
-        @JsonProperty("lower_q")
-        Integer lowerQ
-) {
-}
+        @JsonProperty("lower_q") Integer lowerQ) {}

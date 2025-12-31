@@ -176,4 +176,17 @@ public record Assignment(
         // original assignment's quiz_id
         @JsonProperty("original_quiz_id") Long originalQuizId,
         // String indicating what state this assignment is in
-        @JsonProperty("workflow_state") String workflowState) {}
+        @JsonProperty("workflow_state") String workflowState) {
+
+    public enum GradingType {
+        PASS_FAIL,
+        PERCENT,
+        LETTER_GRADE,
+        GPA_SCALE,
+        POINTS;
+
+        public String type() {
+            return this.name().toLowerCase();
+        }
+    }
+}

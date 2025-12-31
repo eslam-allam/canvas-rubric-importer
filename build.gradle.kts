@@ -109,6 +109,7 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.18.1")
     implementation("org.apache.commons:commons-csv:1.11.0")
     implementation("org.apache.commons:commons-text:1.12.0")
+    implementation("org.apache.httpcomponents.client5:httpclient5:5.6")
 }
 
 java {

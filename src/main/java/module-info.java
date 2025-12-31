@@ -15,6 +15,9 @@ module io.github.eslam_allam.canvas {
     requires com.fasterxml.jackson.databind;
     requires org.apache.commons.csv;
     requires org.apache.commons.text;
+    requires org.apache.httpcomponents.core5.httpcore5;
+    requires org.apache.httpcomponents.client5.httpclient5;
+    requires org.apache.commons.lang3;
 
     // JDK modules
     requires java.net.http;

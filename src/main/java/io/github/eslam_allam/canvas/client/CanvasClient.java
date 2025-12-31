@@ -3,155 +3,199 @@ package io.github.eslam_allam.canvas.client;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.eslam_allam.canvas.model.canvas.Assignment;
+import io.github.eslam_allam.canvas.model.canvas.Assignment.GradingType;
 import io.github.eslam_allam.canvas.model.canvas.Course;
 import io.github.eslam_allam.canvas.model.canvas.RubricModels;
+import io.github.eslam_allam.canvas.request.AssignmentPointsUpdateRequest;
+import io.github.eslam_allam.canvas.request.RequestWrapper;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpHeaders;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.message.BasicHeader;
+import org.apache.hc.core5.net.URIBuilder;
 
 public final class CanvasClient {
 
-    private final String baseUrl;
+    private final URIBuilder baseApi;
     private final String token;
-    private final HttpClient httpClient;
+    private final CloseableHttpClient httpClient;
     private final ObjectMapper objectMapper;
 
-    public CanvasClient(String baseUrl, String token) {
-        this.baseUrl = baseUrl.replaceAll("/+$", "");
+    public CanvasClient(String baseUrl, String token) throws URISyntaxException {
+        this.baseApi = new URIBuilder(baseUrl).appendPath("/api/v1");
         this.token = token;
-        this.httpClient = HttpClient.newBuilder().build();
+        this.httpClient =
+                HttpClientBuilder.create()
+                        .setDefaultHeaders(
+                                List.of(
+                                        new BasicHeader(
+                                                HttpHeaders.AUTHORIZATION, "Bearer " + token),
+                                        new BasicHeader(
+                                                HttpHeaders.CONTENT_TYPE,
+                                                ContentType.APPLICATION_JSON.getMimeType())))
+                        .build();
         this.objectMapper = new ObjectMapper();
     }
 
     public void updateAssignmentPoints(String courseId, String assignmentId, double points)
-            throws IOException, InterruptedException {
-        String url =
-                String.format(
-                        "%s/api/v1/courses/%s/assignments/%s", baseUrl, courseId, assignmentId);
-        Map<String, Object> payload =
-                Map.of("assignment", Map.of("points_possible", points, "grading_type", "points"));
-        String body = objectMapper.writeValueAsString(payload);
-
-        HttpRequest request =
-                HttpRequest.newBuilder()
-                        .uri(URI.create(url))
-                        .header("Authorization", "Bearer " + token)
-                        .header("Content-Type", "application/json")
-                        .PUT(HttpRequest.BodyPublishers.ofString(body))
+            throws IOException, InterruptedException, URISyntaxException {
+        URI url =
+                this.baseApi
+                        .appendPath("courses")
+                        .appendPath(courseId)
+                        .appendPath("assignments")
+                        .appendPath(assignmentId)
                         .build();
+        String body =
+                objectMapper.writeValueAsString(
+                        RequestWrapper.wrap(
+                                "assignment",
+                                new AssignmentPointsUpdateRequest(points, GradingType.POINTS)));
 
-        HttpResponse<String> response = httpClient.send(request, BodyHandlers.ofString());
-        if (response.statusCode() >= 400) {
-            throw new IOException(
-                    "Failed to update assignment points: HTTP "
-                            + response.statusCode()
-                            + " "
-                            + response.body());
-        }
+        HttpPut request = new HttpPut(url);
+        request.setEntity(new StringEntity(body, ContentType.APPLICATION_JSON));
+        this.httpClient.execute(
+                request,
+                response -> {
+                    if (response.getCode() >= 400) {
+                        throw new IOException(
+                                "Failed to update assignment points: HTTP "
+                                        + response.getCode()
+                                        + " "
+                                        + EntityUtils.toString(response.getEntity()));
+                    }
+                    return null;
+                });
     }
 
     public RubricModels.Created createRubric(String courseId, Map<String, String> formFields)
-            throws IOException, InterruptedException {
-        String url = String.format("%s/api/v1/courses/%s/rubrics", baseUrl, courseId);
+            throws IOException, InterruptedException, URISyntaxException {
+        URI url =
+                this.baseApi
+                        .appendPath("courses")
+                        .appendPath(courseId)
+                        .appendPath("rubrics")
+                        .build();
         String formBody = toFormBody(formFields);
 
-        HttpRequest request =
-                HttpRequest.newBuilder()
-                        .uri(URI.create(url))
-                        .header("Authorization", "Bearer " + token)
-                        .header("Content-Type", "application/x-www-form-urlencoded")
-                        .POST(HttpRequest.BodyPublishers.ofString(formBody))
-                        .build();
-
-        HttpResponse<String> response = httpClient.send(request, BodyHandlers.ofString());
-        if (response.statusCode() >= 400) {
-            throw new IOException(
-                    "Rubric create failed: HTTP " + response.statusCode() + "\n" + response.body());
-        }
-        return objectMapper.readValue(response.body(), RubricModels.Created.class);
+        HttpPost request = new HttpPost(url);
+        request.setEntity(new StringEntity(formBody, ContentType.APPLICATION_FORM_URLENCODED));
+        return this.httpClient.execute(
+                request,
+                response -> {
+                    if (response.getCode() >= 400) {
+                        throw new IOException(
+                                "Rubric create failed: HTTP "
+                                        + response.getCode()
+                                        + "\n"
+                                        + EntityUtils.toString(response.getEntity()));
+                    }
+                    return objectMapper.readValue(
+                            response.getEntity().getContent(), RubricModels.Created.class);
+                });
     }
 
-    public List<Course> listCourses() throws IOException, InterruptedException {
-        String url = baseUrl + "/api/v1/courses?enrollment_state=active";
-        return getPaginated(url, Course.class);
+    public List<Course> listCourses() throws IOException, InterruptedException, URISyntaxException {
+        return getPaginated(
+                this.baseApi
+                        .appendPath("courses")
+                        .addParameter("enrollment_state", "active")
+                        .build(),
+                Course.class);
     }
 
     public List<Assignment> listAssignments(String courseId)
-            throws IOException, InterruptedException {
-        String url = String.format("%s/api/v1/courses/%s/assignments", baseUrl, courseId);
-        return getPaginated(url, Assignment.class);
+            throws IOException, InterruptedException, URISyntaxException {
+        return getPaginated(
+                this.baseApi
+                        .appendPath("courses")
+                        .appendPath(courseId)
+                        .appendPath("assignments")
+                        .build(),
+                Assignment.class);
     }
 
     public Assignment getAssignmentWithRubric(String courseId, String assignmentId)
-            throws IOException, InterruptedException {
-        String url =
-                String.format(
-                        "%s/api/v1/courses/%s/assignments/%s?include=rubric,assignment_visibility,overrides,ab_guid",
-                        baseUrl, courseId, assignmentId);
-        HttpRequest request =
-                HttpRequest.newBuilder()
-                        .uri(URI.create(url))
-                        .header("Authorization", "Bearer " + token)
-                        .GET()
+            throws IOException, InterruptedException, URISyntaxException {
+        URI url =
+                this.baseApi
+                        .appendPath("courses")
+                        .appendPath(courseId)
+                        .appendPath("assignments")
+                        .appendPath(assignmentId)
+                        .addParameter("include", "rubric,assignment_visibility,overrides,ab_guid")
                         .build();
-
-        HttpResponse<String> response = httpClient.send(request, BodyHandlers.ofString());
-        if (response.statusCode() >= 400) {
-            throw new IOException(
-                    "Failed to fetch assignment: HTTP "
-                            + response.statusCode()
-                            + " "
-                            + response.body());
-        }
-        return objectMapper.readValue(response.body(), Assignment.class);
+        return this.httpClient.execute(
+                new HttpGet(url),
+                response -> {
+                    if (response.getCode() >= 400) {
+                        throw new IOException(
+                                "Failed to fetch assignment: HTTP "
+                                        + response.getCode()
+                                        + " "
+                                        + EntityUtils.toString(response.getEntity()));
+                    }
+                    return objectMapper.readValue(
+                            response.getEntity().getContent(), Assignment.class);
+                });
     }
 
-    private <T> List<T> getPaginated(String url, Class<T> clazz)
+    private <T> List<T> getPaginated(URI url, Class<T> clazz)
             throws IOException, InterruptedException {
         var result = new java.util.ArrayList<JsonNode>();
-        String nextUrl = url;
+        URI nextUrl = url;
         while (nextUrl != null) {
-            HttpRequest request =
-                    HttpRequest.newBuilder()
-                            .uri(URI.create(nextUrl))
-                            .header("Authorization", "Bearer " + token)
-                            .GET()
-                            .build();
+            final URI targetUrl = nextUrl;
+            Pair<JsonNode, URI> bodyAndNextUrl =
+                    this.httpClient.execute(
+                            new HttpGet(targetUrl),
+                            response -> {
+                                if (response.getCode() >= 400) {
+                                    throw new IOException(
+                                            "HTTP "
+                                                    + response.getCode()
+                                                    + " while calling "
+                                                    + targetUrl
+                                                    + ": "
+                                                    + EntityUtils.toString(response.getEntity()));
+                                }
+                                return Pair.of(
+                                        objectMapper.readTree(response.getEntity().getContent()),
+                                        parseNextLink(
+                                                response.containsHeader("Link")
+                                                        ? response.getFirstHeader("Link").getValue()
+                                                        : ""));
+                            });
 
-            HttpResponse<String> response = httpClient.send(request, BodyHandlers.ofString());
-            if (response.statusCode() >= 400) {
-                throw new IOException(
-                        "HTTP "
-                                + response.statusCode()
-                                + " while calling "
-                                + nextUrl
-                                + ": "
-                                + response.body());
-            }
-
-            JsonNode body = objectMapper.readTree(response.body());
+            JsonNode body = bodyAndNextUrl.getLeft();
+            nextUrl = bodyAndNextUrl.getRight();
             if (body.isArray()) {
                 body.forEach(result::add);
             } else {
                 result.add(body);
             }
-
-            nextUrl = parseNextLink(response.headers().firstValue("Link").orElse(""));
         }
         return objectMapper.convertValue(
                 result, objectMapper.getTypeFactory().constructCollectionType(List.class, clazz));
     }
 
-    private static String parseNextLink(String linkHeader) {
+    private static URI parseNextLink(String linkHeader) {
         if (linkHeader == null || linkHeader.isEmpty()) {
             return null;
         }
@@ -161,7 +205,7 @@ public final class CanvasClient {
                 int start = part.indexOf('<');
                 int end = part.indexOf('>');
                 if (start >= 0 && end > start) {
-                    return part.substring(start + 1, end);
+                    return URI.create(part.substring(start + 1, end));
                 }
             }
         }

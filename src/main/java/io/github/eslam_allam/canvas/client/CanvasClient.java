@@ -32,14 +32,26 @@ import org.apache.hc.core5.net.URIBuilder;
 
 public final class CanvasClient {
 
+    private enum ResourceType {
+        COURSES("courses"),
+        ASSIGNMENTS("assignments");
+        private String type;
+
+        private ResourceType(String type) {
+            this.type = type;
+        }
+
+        public String type() {
+            return this.type;
+        }
+    }
+
     private final URIBuilder baseApi;
-    private final String token;
     private final CloseableHttpClient httpClient;
     private final ObjectMapper objectMapper;
 
     public CanvasClient(String baseUrl, String token) throws URISyntaxException {
         this.baseApi = new URIBuilder(baseUrl).appendPath("/api/v1");
-        this.token = token;
         this.httpClient =
                 HttpClientBuilder.create()
                         .setDefaultHeaders(
@@ -54,12 +66,12 @@ public final class CanvasClient {
     }
 
     public void updateAssignmentPoints(String courseId, String assignmentId, double points)
-            throws IOException, InterruptedException, URISyntaxException {
+            throws IOException, URISyntaxException {
         URI url =
                 this.baseApi
-                        .appendPath("courses")
+                        .appendPath(ResourceType.COURSES.type())
                         .appendPath(courseId)
-                        .appendPath("assignments")
+                        .appendPath(ResourceType.ASSIGNMENTS.type())
                         .appendPath(assignmentId)
                         .build();
         String body =
@@ -85,10 +97,10 @@ public final class CanvasClient {
     }
 
     public RubricModels.Created createRubric(String courseId, Map<String, String> formFields)
-            throws IOException, InterruptedException, URISyntaxException {
+            throws IOException, URISyntaxException {
         URI url =
                 this.baseApi
-                        .appendPath("courses")
+                        .appendPath(ResourceType.COURSES.type())
                         .appendPath(courseId)
                         .appendPath("rubrics")
                         .build();
@@ -111,20 +123,20 @@ public final class CanvasClient {
                 });
     }
 
-    public List<Course> listCourses() throws IOException, InterruptedException, URISyntaxException {
+    public List<Course> listCourses() throws IOException, URISyntaxException {
         return getPaginated(
                 this.baseApi
-                        .appendPath("courses")
+                        .appendPath(ResourceType.COURSES.type())
                         .addParameter("enrollment_state", "active")
                         .build(),
                 Course.class);
     }
 
     public List<Assignment> listAssignments(String courseId)
-            throws IOException, InterruptedException, URISyntaxException {
+            throws IOException, URISyntaxException {
         return getPaginated(
                 this.baseApi
-                        .appendPath("courses")
+                        .appendPath(ResourceType.COURSES.type())
                         .appendPath(courseId)
                         .appendPath("assignments")
                         .build(),
@@ -132,12 +144,12 @@ public final class CanvasClient {
     }
 
     public Assignment getAssignmentWithRubric(String courseId, String assignmentId)
-            throws IOException, InterruptedException, URISyntaxException {
+            throws IOException, URISyntaxException {
         URI url =
                 this.baseApi
-                        .appendPath("courses")
+                        .appendPath(ResourceType.COURSES.type())
                         .appendPath(courseId)
-                        .appendPath("assignments")
+                        .appendPath(ResourceType.ASSIGNMENTS.type())
                         .appendPath(assignmentId)
                         .addParameter("include", "rubric,assignment_visibility,overrides,ab_guid")
                         .build();
@@ -156,8 +168,7 @@ public final class CanvasClient {
                 });
     }
 
-    private <T> List<T> getPaginated(URI url, Class<T> clazz)
-            throws IOException, InterruptedException {
+    private <T> List<T> getPaginated(URI url, Class<T> clazz) throws IOException {
         var result = new java.util.ArrayList<JsonNode>();
         URI nextUrl = url;
         while (nextUrl != null) {

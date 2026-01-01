@@ -833,7 +833,6 @@ public class MainController {
             return;
         }
 
-        String baseUrl = baseUrlField.getText().trim();
         boolean freeForm = freeFormCommentsCheck.isSelected();
         boolean useForGrading = useForGradingCheck.isSelected();
         boolean hideScoreTotal = hideScoreTotalCheck.isSelected();

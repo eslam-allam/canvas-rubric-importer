@@ -164,9 +164,25 @@ jlink {
         if (Os.isFamily(Os.FAMILY_WINDOWS)) {
             project.logger.lifecycle("Using windows icon")
             icon = "icons/canvas_rubric_importer.ico"
+            installerOptions =
+                listOf(
+                    "--win-shortcut", // Create a Desktop shortcut
+                    "--win-menu", // Add to Start Menu
+                    "--win-menu-group",
+                    "Canvas Tools", // (Optional) Group in Start Menu
+                    "--win-dir-chooser",
+                )
         } else {
             project.logger.lifecycle("Using Linux Icon")
             icon = "icons/png/canvas_rubric_importer 128x128.png"
+            installerOptions =
+                listOf(
+                    "--linux-shortcut", // Creates a .desktop file
+                    "--linux-menu-group",
+                    "Canvas Tools", // (Optional) Menu category
+                    "--linux-deb-maintainer",
+                    appMeta.maintainerName + " " + appMeta.maintainerEmail,
+                )
         }
     }
 }

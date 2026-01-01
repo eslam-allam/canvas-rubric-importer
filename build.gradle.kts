@@ -86,9 +86,7 @@ spotless {
     }
 
     java {
-        // apply a specific flavor of google-java-format
-        googleJavaFormat().aosp().reflowLongStrings().skipJavadocFormatting()
-        // fix formatting of type annotations
+        palantirJavaFormat()
         formatAnnotations()
         targetExclude("build/generated/**")
     }

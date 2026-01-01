@@ -5,11 +5,12 @@ module io.github.eslam_allam.canvas {
     // Public APIs used by CLI/GUI
     exports io.github.eslam_allam.canvas.cli;
     exports io.github.eslam_allam.canvas.gui;
+    exports io.github.eslam_allam.canvas.client;
 
     // JavaFX modules
     requires javafx.base;
     requires javafx.controls;
-    requires javafx.graphics;
+    requires transitive javafx.graphics;
 
     // Third-party libraries
     requires com.fasterxml.jackson.databind;

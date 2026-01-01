@@ -16,8 +16,7 @@ public final class RubricModels {
             @JsonProperty("long_description") String longDescription) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static final record Criterion(
-            String name, String description, double points, List<Rating> ratings) {}
+    public static final record Criterion(String name, String description, double points, List<Rating> ratings) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static final record Criteria(
@@ -32,11 +31,13 @@ public final class RubricModels {
             List<Rating> ratings) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static final record Settings(@JsonProperty("points_possible") String pointsPossible) {}
+    public static final record Settings(
+            @JsonProperty("points_possible") String pointsPossible) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static final record Created(
-            Integer rubric, @JsonProperty("rubric_association") Integer rubricAssociation) {}
+            Integer rubric,
+            @JsonProperty("rubric_association") Integer rubricAssociation) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static final record Rubric(String title, List<Criterion> criteria) {

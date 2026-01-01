@@ -30,14 +30,13 @@ public final class CsvRubricParser {
     public ParsedRubric parse(Path csvPath) throws IOException {
 
         try (BufferedReader reader = Files.newBufferedReader(csvPath, StandardCharsets.UTF_8);
-                CSVParser parser =
-                        CSVFormat.DEFAULT
-                                .builder()
-                                .setHeader()
-                                .setSkipHeaderRecord(true)
-                                .setTrim(true)
-                                .build()
-                                .parse(reader)) {
+                CSVParser parser = CSVFormat.DEFAULT
+                        .builder()
+                        .setHeader()
+                        .setSkipHeaderRecord(true)
+                        .setTrim(true)
+                        .build()
+                        .parse(reader)) {
 
             List<String> headerList = parser.getHeaderNames();
             if (headerList == null || headerList.isEmpty()) {
@@ -53,8 +52,7 @@ public final class CsvRubricParser {
 
             var ratingGroups = RatingHeaderDetector.detect(headers);
             if (ratingGroups.size() < 2) {
-                throw new IllegalArgumentException(
-                        "CSV must have at least rating1/rating1_points/rating1_desc, etc.");
+                throw new IllegalArgumentException("CSV must have at least rating1/rating1_points/rating1_desc, etc.");
             }
 
             validateNoExtraColumns(headers, ratingGroups);
@@ -74,10 +72,9 @@ public final class CsvRubricParser {
                     throw new IllegalArgumentException("Row " + rowNum + ": empty criterion.");
                 }
 
-                String desc =
-                        criterionDescIdx >= 0
-                                ? normalizeText(record.get(criterionDescIdx).trim())
-                                : "";
+                String desc = criterionDescIdx >= 0
+                        ? normalizeText(record.get(criterionDescIdx).trim())
+                        : "";
 
                 List<RubricModels.Rating> ratings = new ArrayList<>();
                 boolean hasZeroRating = false;
@@ -92,23 +89,15 @@ public final class CsvRubricParser {
                     }
 
                     if (name.isBlank()) {
-                        throw new IllegalArgumentException(
-                                "Row " + rowNum + ": " + g.nameColumn() + " empty.");
+                        throw new IllegalArgumentException("Row " + rowNum + ": " + g.nameColumn() + " empty.");
                     }
 
                     if (longDesc.isBlank()) {
-                        throw new IllegalArgumentException(
-                                "Row " + rowNum + ": " + g.descColumn() + " empty.");
+                        throw new IllegalArgumentException("Row " + rowNum + ": " + g.descColumn() + " empty.");
                     }
 
                     double ratingPts =
-                            parseDouble(
-                                    ptsRaw,
-                                    "Row "
-                                            + rowNum
-                                            + ": "
-                                            + g.pointsColumn()
-                                            + " must be numeric.");
+                            parseDouble(ptsRaw, "Row " + rowNum + ": " + g.pointsColumn() + " must be numeric.");
 
                     if (ratingPts == 0.0) {
                         hasZeroRating = true;
@@ -121,28 +110,25 @@ public final class CsvRubricParser {
                 }
 
                 if (ratings.isEmpty()) {
-                    throw new IllegalArgumentException(
-                            "Row " + rowNum + ": criterion must have at least one rating.");
+                    throw new IllegalArgumentException("Row " + rowNum + ": criterion must have at least one rating.");
                 }
 
                 if (!hasZeroRating) {
                     throw new IllegalArgumentException(
-                            "Row "
-                                    + rowNum
-                                    + ": criterion must include at least one rating with 0"
-                                    + " points.");
+                            "Row " + rowNum + ": criterion must include at least one rating with 0" + " points.");
                 }
 
                 if (!hasPositiveRating) {
-                    throw new IllegalArgumentException(
-                            "Row "
-                                    + rowNum
-                                    + ": criterion must include at least one rating with"
-                                    + " positive points.");
+                    throw new IllegalArgumentException("Row "
+                            + rowNum
+                            + ": criterion must include at least one rating with"
+                            + " positive points.");
                 }
 
-                double criterionPoints =
-                        ratings.stream().mapToDouble(RubricModels.Rating::points).max().orElse(0.0);
+                double criterionPoints = ratings.stream()
+                        .mapToDouble(RubricModels.Rating::points)
+                        .max()
+                        .orElse(0.0);
 
                 criteria.add(new RubricModels.Criterion(criterion, desc, criterionPoints, ratings));
                 total += criterionPoints;
@@ -152,8 +138,7 @@ public final class CsvRubricParser {
         }
     }
 
-    private static void validateNoExtraColumns(
-            String[] headers, List<RatingHeaderDetector.RatingGroup> ratingGroups) {
+    private static void validateNoExtraColumns(String[] headers, List<RatingHeaderDetector.RatingGroup> ratingGroups) {
         var allowed = new java.util.HashSet<String>();
         allowed.add("criterion");
         allowed.add("criterion_desc");
@@ -170,8 +155,7 @@ public final class CsvRubricParser {
             }
         }
         if (!extra.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Unexpected column(s) in header: " + String.join(", ", extra));
+            throw new IllegalArgumentException("Unexpected column(s) in header: " + String.join(", ", extra));
         }
     }
 

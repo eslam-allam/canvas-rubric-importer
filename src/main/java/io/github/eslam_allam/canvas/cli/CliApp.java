@@ -1,6 +1,7 @@
 package io.github.eslam_allam.canvas.cli;
 
 import io.github.eslam_allam.canvas.client.CanvasClient;
+import io.github.eslam_allam.canvas.client.CanvasCredentialProvider;
 import io.github.eslam_allam.canvas.model.canvas.RubricModels;
 import io.github.eslam_allam.canvas.rubric.importing.csv.CsvRubricParser;
 import java.nio.file.Path;
@@ -39,8 +40,7 @@ public final class CliApp {
                 case "--use-for-grading" -> useForGrading = Boolean.parseBoolean(args[++i]);
                 case "--hide-score-total" -> hideScoreTotal = Boolean.parseBoolean(args[++i]);
                 case "--purpose" -> purpose = args[++i];
-                case "--sync-assignment-points" ->
-                        syncAssignmentPoints = Boolean.parseBoolean(args[++i]);
+                case "--sync-assignment-points" -> syncAssignmentPoints = Boolean.parseBoolean(args[++i]);
                 case "--dry-run" -> dryRun = true;
                 default -> {
                     System.err.println("Unknown argument: " + args[i]);
@@ -73,16 +73,28 @@ public final class CliApp {
         List<RubricModels.Criterion> criteria = parsed.criteria();
         double totalPoints = parsed.totalPoints();
 
-        CanvasClient client = new CanvasClient(baseUrl, token);
-        var formFields =
-                client.buildFormFieldsForRubricCreate(
-                        title,
-                        freeFormComments,
-                        criteria,
-                        Integer.parseInt(assignmentId),
-                        useForGrading,
-                        hideScoreTotal,
-                        purpose);
+        final String finalToken = token;
+        final String finalBaseUrl = baseUrl;
+
+        CanvasClient client = new CanvasClient(new CanvasCredentialProvider() {
+            @Override
+            public String loadToken() {
+                return finalToken;
+            }
+
+            @Override
+            public String loadBaseUrl() {
+                return finalBaseUrl;
+            }
+        });
+        var formFields = client.buildFormFieldsForRubricCreate(
+                title,
+                freeFormComments,
+                criteria,
+                Integer.parseInt(assignmentId),
+                useForGrading,
+                hideScoreTotal,
+                purpose);
 
         if (dryRun) {
             System.out.println("# Rubric total (sum of criterion points): " + totalPoints);
@@ -108,12 +120,10 @@ public final class CliApp {
     }
 
     private static void printUsage() {
-        System.out.println(
-                "Usage: CanvasRubricImporter --token <canvas-token> --course-id <id>"
-                        + " --assignment-id <id> --title <title> --csv <file> [options]");
+        System.out.println("Usage: CanvasRubricImporter --token <canvas-token> --course-id <id>"
+                + " --assignment-id <id> --title <title> --csv <file> [options]");
         System.out.println("Options:");
         System.out.println(
-                "  --no-html-decode   Do not decode HTML entities in text fields (e.g., &amp;lt;,"
-                        + " -&gt;).");
+                "  --no-html-decode   Do not decode HTML entities in text fields (e.g., &amp;lt;," + " -&gt;).");
     }
 }

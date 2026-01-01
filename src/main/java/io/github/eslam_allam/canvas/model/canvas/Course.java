@@ -97,8 +97,10 @@ public record Course(
         @JsonProperty("allow_student_forum_attachments") Boolean allowStudentForumAttachments,
         @JsonProperty("open_enrollment") Boolean openEnrollment,
         @JsonProperty("self_enrollment") Boolean selfEnrollment,
+
         @JsonProperty("restrict_enrollments_to_course_dates")
-                Boolean restrictEnrollmentsToCourseDates,
+        Boolean restrictEnrollmentsToCourseDates,
+
         @JsonProperty("course_format") String courseFormat,
 
         // optional: this will be true if this user is currently prevented from viewing

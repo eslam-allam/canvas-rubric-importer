@@ -66,8 +66,7 @@ public record Assignment(
         // number of submissions that need grading
         @JsonProperty("needs_grading_count") Integer needsGradingCount,
         // needs grading count by section
-        @JsonProperty("needs_grading_count_by_section")
-                List<NeedsGradingCount> needsGradingCountBySection,
+        @JsonProperty("needs_grading_count_by_section") List<NeedsGradingCount> needsGradingCountBySection,
         // sorting order of the assignment in the group
         Integer position,
         // post to SIS
@@ -130,7 +129,7 @@ public record Assignment(
         @JsonProperty("graders_anonymous_to_graders") Boolean gradersAnonymousToGraders,
         // Boolean indicating if provisional grader identities are visible
         @JsonProperty("grader_names_visible_to_final_grader")
-                Boolean graderNamesVisibleToFinalGrader,
+        Boolean graderNamesVisibleToFinalGrader,
         // Boolean indicating if the assignment is graded anonymously
         @JsonProperty("anonymous_grading") Boolean anonymousGrading,
         // number of submission attempts a student can make

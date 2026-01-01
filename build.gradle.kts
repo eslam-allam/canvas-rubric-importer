@@ -163,7 +163,7 @@ jlink {
         vendor = appMeta.vendor
         if (Os.isFamily(Os.FAMILY_WINDOWS)) {
             project.logger.lifecycle("Using windows icon")
-            icon = "icons/png/canvas_rubric_importer.ico"
+            icon = "icons/canvas_rubric_importer.ico"
         } else {
             project.logger.lifecycle("Using Linux Icon")
             icon = "icons/png/canvas_rubric_importer 128x128.png"

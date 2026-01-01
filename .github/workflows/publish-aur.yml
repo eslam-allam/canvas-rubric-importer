@@ -80,6 +80,9 @@ jobs:
           # Update pkgver
           sed -i "s/^pkgver=.*/pkgver=${VERSION}/" PKGBUILD
 
+          # Update pkgrel
+          sed -i "s/^pkgrel=.*/pkgrel=1/" PKGBUILD
+
           # Update sha256sums
           sed -i "s/^sha256sums=('.*')/sha256sums=('${SHA256}')/" PKGBUILD
 

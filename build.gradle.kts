@@ -1,7 +1,10 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
 plugins {
     id("application")
     id("org.openjfx.javafxplugin") version "0.1.0"
     id("com.diffplug.spotless") version "8.1.0"
+    id("org.beryx.jlink") version "3.1.3"
 }
 
 repositories {
@@ -86,9 +89,7 @@ spotless {
     }
 
     java {
-        // apply a specific flavor of google-java-format
-        googleJavaFormat().aosp().reflowLongStrings().skipJavadocFormatting()
-        // fix formatting of type annotations
+        palantirJavaFormat()
         formatAnnotations()
         targetExclude("build/generated/**")
     }
@@ -109,6 +110,7 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.18.1")
     implementation("org.apache.commons:commons-csv:1.11.0")
     implementation("org.apache.commons:commons-text:1.12.0")
+    implementation("org.apache.httpcomponents.client5:httpclient5:5.6")
 }
 
 java {
@@ -118,8 +120,7 @@ java {
 }
 
 application {
-    // Modular application: specify module/name instead of only the main class
-    mainModule.set(mainClassModule)
+    mainModule.set(appMeta.id)
 }
 
 tasks.register<JavaExec>("runCli") {
@@ -145,209 +146,43 @@ tasks.jar {
     }
 }
 
-val jpackageOutputDir = layout.buildDirectory.dir("jpackage")
-val jlinkImageDir = layout.buildDirectory.dir("image")
+jlink {
+    imageDir.set(layout.buildDirectory.dir("image"))
+    options.set(listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages"))
 
-// Choose the platform-specific javafx-jmods directory
-fun javafxJmodsDirForCurrentOs(): String {
-    val os =
-        org.gradle.internal.os.OperatingSystem
-            .current()
-    val base = "javafx-jmods"
-    return when {
-        os.isWindows -> "$base/windows"
-        os.isLinux -> "$base/linux"
-        os.isMacOsX -> "$base/macos"
-        else -> base
+    launcher {
+        name = appMeta.name
+        jvmArgs = listOf("-m", mainClassModule)
     }
-}
 
-// Build a custom runtime image using jlink and local jmods (javafx-jmods)
-tasks.register<org.gradle.api.tasks.Exec>("jlinkImage") {
-    group = "distribution"
-    description = "Create custom runtime image with jlink using local, platform-specific javafx-jmods directory"
+    jpackage {
+        // Use plugin defaults for output dirs
 
-    dependsOn("jar")
-
-    doFirst {
-        // jlink requires that the output directory must NOT exist before running
-        val imageDirFile = jlinkImageDir.get().asFile
-        if (imageDirFile.exists()) {
-            imageDirFile.deleteRecursively()
+        installerName = appMeta.name
+        appVersion = appMeta.version
+        vendor = appMeta.vendor
+        if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+            project.logger.lifecycle("Using windows icon")
+            icon = "icons/canvas_rubric_importer.ico"
+            installerOptions =
+                listOf(
+                    "--win-shortcut", // Create a Desktop shortcut
+                    "--win-menu", // Add to Start Menu
+                    "--win-menu-group",
+                    "Canvas Tools", // (Optional) Group in Start Menu
+                    "--win-dir-chooser",
+                )
+        } else {
+            project.logger.lifecycle("Using Linux Icon")
+            icon = "icons/png/canvas_rubric_importer 128x128.png"
+            installerOptions =
+                listOf(
+                    "--linux-shortcut", // Creates a .desktop file
+                    "--linux-menu-group",
+                    "Canvas Tools", // (Optional) Menu category
+                    "--linux-deb-maintainer",
+                    appMeta.maintainerName + " " + appMeta.maintainerEmail,
+                )
         }
     }
-
-    // Resolve all runtime dependencies (3rd-party libraries, not including the app JAR)
-    val runtimeClasspath = configurations["runtimeClasspath"].resolve()
-    val dependencyJars = runtimeClasspath.filter { !it.name.startsWith("${project.name}-") }
-    val depsOnPath = dependencyJars.joinToString(File.pathSeparator) { it.absolutePath }
-
-    // The application jar, which contains the named module io.github.eslam_allam.canvas
-    val libsDir =
-        layout.buildDirectory
-            .dir("libs")
-            .get()
-            .asFile
-    val appJar = File(libsDir, "${project.name}-${project.version}.jar")
-
-    // Compose full module-path: platform-specific javafx-jmods + all dependency jars + the app jar
-    val jmodsDir = javafxJmodsDirForCurrentOs()
-    val fullModulePath =
-        listOf(jmodsDir, depsOnPath, appJar.absolutePath)
-            .filter { it.isNotBlank() }
-            .joinToString(File.pathSeparator)
-
-    // Use local jmods directory plus all runtime jars and the app jar on the module path
-    commandLine(
-        "jlink",
-        "--module-path",
-        fullModulePath,
-        "--add-modules",
-        appMeta.id,
-        "--output",
-        jlinkImageDir.get().asFile.absolutePath,
-        "--strip-debug",
-        "--compress",
-        "2",
-        "--no-header-files",
-        "--no-man-pages",
-    )
-}
-
-// Build DEB (Linux) using jpackage and a custom runtime image from jlink
-val debOutputDir = jpackageOutputDir.map { it.dir("deb") }
-
-tasks.register<org.gradle.api.tasks.Exec>("packageDeb") {
-    dependsOn("jlinkImage")
-
-    group = "distribution"
-    description = "Build DEB installer using jpackage (run on Linux)."
-
-    dependsOn("jar")
-
-    doFirst {
-        val outDir = debOutputDir.get().asFile
-        if (outDir.exists()) {
-            outDir.deleteRecursively()
-        }
-        outDir.mkdirs()
-    }
-
-    val imageDir = jlinkImageDir.get().asFile
-
-    commandLine(
-        "jpackage",
-        "--type",
-        "deb",
-        "--name",
-        appMeta.name,
-        "--app-version",
-        appMeta.version,
-        "--runtime-image",
-        imageDir.absolutePath,
-        "--module",
-        mainClassModule,
-        "--dest",
-        debOutputDir.get().asFile.absolutePath,
-        "--icon",
-        "icons/png/canvas_rubric_importer 128x128.png",
-        "--vendor",
-        appMeta.vendor,
-        "--linux-shortcut",
-        "--linux-menu-group",
-        "Canvas Tools",
-        "--linux-deb-maintainer",
-        appMeta.maintainerName + " " + appMeta.maintainerEmail,
-    )
-}
-
-// Build RPM (Linux) using jpackage and a custom runtime image from jlink
-val rpmOutputDir = jpackageOutputDir.map { it.dir("rpm") }
-
-tasks.register<org.gradle.api.tasks.Exec>("packageRpm") {
-    dependsOn("jlinkImage")
-
-    group = "distribution"
-    description = "Build RPM installer using jpackage (run on Linux)."
-
-    dependsOn("jar")
-
-    doFirst {
-        val outDir = rpmOutputDir.get().asFile
-        if (outDir.exists()) {
-            outDir.deleteRecursively()
-        }
-        outDir.mkdirs()
-    }
-
-    val imageDir = jlinkImageDir.get().asFile
-
-    commandLine(
-        "jpackage",
-        "--type",
-        "rpm",
-        "--name",
-        appMeta.name,
-        "--app-version",
-        appMeta.version,
-        "--runtime-image",
-        imageDir.absolutePath,
-        "--module",
-        mainClassModule,
-        "--dest",
-        rpmOutputDir.get().asFile.absolutePath,
-        "--icon",
-        "icons/png/canvas_rubric_importer 128x128.png",
-        "--vendor",
-        appMeta.vendor,
-        "--linux-shortcut",
-        "--linux-menu-group",
-        "Canvas Tools",
-    )
-}
-
-// Build MSI (Windows) using jpackage and a custom runtime image from jlink
-val msiOutputDir = jpackageOutputDir.map { it.dir("msi") }
-
-tasks.register<org.gradle.api.tasks.Exec>("packageMsi") {
-    dependsOn("jlinkImage")
-
-    group = "distribution"
-    description = "Build MSI installer using jpackage (run on Windows)."
-
-    dependsOn("jar")
-
-    doFirst {
-        val outDir = msiOutputDir.get().asFile
-        if (outDir.exists()) {
-            outDir.deleteRecursively()
-        }
-        outDir.mkdirs()
-    }
-
-    val imageDir = jlinkImageDir.get().asFile
-
-    commandLine(
-        "jpackage",
-        "--type",
-        "msi",
-        "--name",
-        appMeta.name,
-        "--app-version",
-        appMeta.version,
-        "--runtime-image",
-        imageDir.absolutePath,
-        "--module",
-        mainClassModule,
-        "--dest",
-        msiOutputDir.get().asFile.absolutePath,
-        "--icon",
-        "icons/canvas_rubric_importer.ico",
-        "--vendor",
-        appMeta.vendor,
-        "--win-shortcut",
-        "--win-menu",
-        "--win-menu-group",
-        "Canvas Tools",
-    )
 }

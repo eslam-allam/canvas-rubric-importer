@@ -23,7 +23,7 @@ jobs:
       - name: Set up Java 25
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
+          distribution: zulu
           java-version: "25"
 
       - name: Cache Gradle
@@ -37,21 +37,21 @@ jobs:
 
       - name: Build DEB and RPM
         run: |
-          ./gradlew packageDeb packageRpm
+          ./gradlew jpackage
 
       - name: Upload DEB artifact
         id: deb
         uses: actions/upload-artifact@v4
         with:
           name: deb-package
-          path: build/jpackage/deb/*.deb
+          path: build/jpackage/*.deb
 
       - name: Upload RPM artifact
         id: rpm
         uses: actions/upload-artifact@v4
         with:
           name: rpm-package
-          path: build/jpackage/rpm/*.rpm
+          path: build/jpackage/*.rpm
 
 
 
@@ -67,7 +67,7 @@ jobs:
       - name: Set up Java 25
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
+          distribution: zulu
           java-version: "25"
 
       - name: Cache Gradle
@@ -75,13 +75,13 @@ jobs:
 
       - name: Build MSI
         run: |
-          ./gradlew.bat packageMsi
+          ./gradlew.bat jpackage
 
       - name: Upload MSI artifact
         uses: actions/upload-artifact@v4
         with:
           name: msi-package
-          path: build/jpackage/msi/*.msi
+          path: build/jpackage/*.msi
 
   create-release:
     name: Create GitHub Release and upload assets

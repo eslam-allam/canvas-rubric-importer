@@ -6,6 +6,8 @@ module io.github.eslam_allam.canvas {
     exports io.github.eslam_allam.canvas.cli;
     exports io.github.eslam_allam.canvas.gui;
     exports io.github.eslam_allam.canvas.client;
+    exports io.github.eslam_allam.canvas.domain;
+    exports io.github.eslam_allam.canvas.model.canvas;
 
     // JavaFX modules
     requires javafx.base;
@@ -16,7 +18,7 @@ module io.github.eslam_allam.canvas {
     requires com.fasterxml.jackson.databind;
     requires org.apache.commons.csv;
     requires org.apache.commons.text;
-    requires org.apache.httpcomponents.core5.httpcore5;
+    requires transitive org.apache.httpcomponents.core5.httpcore5;
     requires org.apache.httpcomponents.client5.httpclient5;
     requires org.apache.commons.lang3;
 

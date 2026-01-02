@@ -154,34 +154,33 @@ tasks.jar {
     }
 }
 
-val cleanedAppName = appMeta.name.replace(" ", "_").lowercase()
+val installerOptionsInit = mutableListOf<String>()
 
 jlink {
     options = listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages")
     javaHome = Jvm.current().getJavaHome()
 
     launcher {
-        name = appMeta.name
+        name = appMeta.name.replace(" ", "")
         jvmArgs = listOf("-m", mainClassModule, "--enable-native-access", "javafx.graphics")
     }
 
     jpackage {
         appVersion = appMeta.version
         vendor = appMeta.vendor
-        installerOptions =
-            mutableListOf(
+        installerOptionsInit.addAll(
+            listOf(
                 "--description",
                 appMeta.description,
                 "--copyright",
                 "Copyright 2026 eslam-allam",
-            )
+            ),
+        )
         if (Os.isFamily(Os.FAMILY_WINDOWS)) {
             project.logger.lifecycle("Using windows icon")
-            imageOptions = mutableListOf("--icon", "icons/canvas_rubric_importer.ico")
-            installerOptions.plus(
+            icon = "icons/canvas_rubric_importer.ico"
+            installerOptionsInit.addAll(
                 listOf(
-                    "--icon",
-                    "icons/png/canvas_rubric_importer 128x128.png",
                     "--win-per-user-install",
                     "--win-shortcut", // Create a Desktop shortcut
                     "--win-menu", // Add to Start Menu
@@ -192,11 +191,9 @@ jlink {
             )
         } else {
             project.logger.lifecycle("Using Linux Icon")
-            imageOptions = mutableListOf("--icon", "icons/png/canvas_rubric_importer 128x128.png")
-            installerOptions.plus(
+            icon = "icons/png/canvas_rubric_importer 128x128.png"
+            installerOptionsInit.addAll(
                 listOf(
-                    "--icon",
-                    "icons/png/canvas_rubric_importer 128x128.png",
                     "--linux-shortcut", // Creates a .desktop file
                     "--linux-menu-group",
                     "Canvas Tools", // (Optional) Menu category
@@ -205,5 +202,6 @@ jlink {
                 ),
             )
         }
+        installerOptions = installerOptionsInit
     }
 }

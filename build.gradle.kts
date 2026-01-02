@@ -161,7 +161,7 @@ jlink {
     javaHome = Jvm.current().getJavaHome()
 
     launcher {
-        name = cleanedAppName
+        name = appMeta.name
         jvmArgs = listOf("-m", mainClassModule, "--enable-native-access", "javafx.graphics")
     }
 

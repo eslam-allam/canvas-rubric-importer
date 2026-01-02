@@ -157,7 +157,16 @@ tasks.jar {
 val installerOptionsInit = mutableListOf<String>()
 
 jlink {
-    options = listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages")
+    options =
+        listOf(
+            "--strip-debug",
+            "--compress",
+            "2",
+            "--no-header-files",
+            "--no-man-pages",
+            "--add-modules",
+            "java.base,java.net.http,java.security.sasl,java.security.jgss,jdk.crypto.ec",
+        )
     javaHome = Jvm.current().getJavaHome()
 
     launcher {

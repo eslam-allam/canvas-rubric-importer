@@ -178,8 +178,8 @@ jlink {
         if (Os.isFamily(Os.FAMILY_WINDOWS)) {
             project.logger.lifecycle("Using windows icon")
             imageOptions = mutableListOf("--icon", "icons/canvas_rubric_importer.ico")
-            installerOptions.addAll(
-                mutableListOf(
+            installerOptions.plus(
+                listOf(
                     "--icon",
                     "icons/png/canvas_rubric_importer 128x128.png",
                     "--win-per-user-install",
@@ -193,8 +193,8 @@ jlink {
         } else {
             project.logger.lifecycle("Using Linux Icon")
             imageOptions = mutableListOf("--icon", "icons/png/canvas_rubric_importer 128x128.png")
-            installerOptions =
-                mutableListOf(
+            installerOptions.plus(
+                listOf(
                     "--icon",
                     "icons/png/canvas_rubric_importer 128x128.png",
                     "--linux-shortcut", // Creates a .desktop file
@@ -202,7 +202,8 @@ jlink {
                     "Canvas Tools", // (Optional) Menu category
                     "--linux-deb-maintainer",
                     appMeta.maintainerName + " " + appMeta.maintainerEmail,
-                )
+                ),
+            )
         }
     }
 }

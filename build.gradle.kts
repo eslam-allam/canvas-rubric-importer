@@ -1,10 +1,16 @@
 import org.apache.tools.ant.taskdefs.condition.Os
+import org.gradle.internal.jvm.Jvm
+
+buildscript {
+    plugins {
+        id("com.diffplug.spotless") version "8.1.0"
+        id("org.beryx.jlink") version "3.2.0"
+        id("org.openjfx.javafxplugin") version "0.1.0"
+    }
+}
 
 plugins {
     id("application")
-    id("org.openjfx.javafxplugin") version "0.1.0"
-    id("com.diffplug.spotless") version "8.1.0"
-    id("org.beryx.jlink") version "3.1.3"
 }
 
 repositories {
@@ -15,6 +21,7 @@ data class AppMeta(
     val name: String,
     val version: String,
     val vendor: String,
+    val description: String,
     val id: String,
     val maintainerName: String,
     val maintainerEmail: String,
@@ -25,6 +32,7 @@ val appMeta =
         name = property("app.name").toString(),
         version = property("app.version").toString(),
         vendor = property("app.vendor").toString(),
+        description = property("app.description").toString(),
         id = property("app.id").toString(),
         maintainerName = property("app.maintainer.name").toString(),
         maintainerEmail = property("app.maintainer.email").toString(),
@@ -102,7 +110,7 @@ spotless {
 
 javafx {
 
-    version = "25"
+    version = "21"
     modules = listOf("javafx.controls", "javafx.graphics", "javafx.base")
 }
 
@@ -115,7 +123,7 @@ dependencies {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(25))
+        languageVersion.set(JavaLanguageVersion.of(21))
     }
 }
 
@@ -146,37 +154,49 @@ tasks.jar {
     }
 }
 
+val cleanedAppName = appMeta.name.replace(" ", "_").lowercase()
+
 jlink {
-    imageDir.set(layout.buildDirectory.dir("image"))
-    options.set(listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages"))
+    options = listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages")
+    javaHome = Jvm.current().getJavaHome()
 
     launcher {
-        name = appMeta.name
-        jvmArgs = listOf("-m", mainClassModule)
+        name = cleanedAppName
+        jvmArgs = listOf("-m", mainClassModule, "--enable-native-access", "javafx.graphics")
     }
 
     jpackage {
-        // Use plugin defaults for output dirs
-
-        installerName = appMeta.name
         appVersion = appMeta.version
         vendor = appMeta.vendor
+        installerOptions =
+            mutableListOf(
+                "--description",
+                appMeta.description,
+                "--copyright",
+                "Copyright 2026 eslam-allam",
+            )
         if (Os.isFamily(Os.FAMILY_WINDOWS)) {
             project.logger.lifecycle("Using windows icon")
-            icon = "icons/canvas_rubric_importer.ico"
-            installerOptions =
-                listOf(
+            imageOptions = mutableListOf("--icon", "icons/canvas_rubric_importer.ico")
+            installerOptions.addAll(
+                mutableListOf(
+                    "--icon",
+                    "icons/png/canvas_rubric_importer 128x128.png",
+                    "--win-per-user-install",
                     "--win-shortcut", // Create a Desktop shortcut
                     "--win-menu", // Add to Start Menu
                     "--win-menu-group",
                     "Canvas Tools", // (Optional) Group in Start Menu
                     "--win-dir-chooser",
-                )
+                ),
+            )
         } else {
             project.logger.lifecycle("Using Linux Icon")
-            icon = "icons/png/canvas_rubric_importer 128x128.png"
+            imageOptions = mutableListOf("--icon", "icons/png/canvas_rubric_importer 128x128.png")
             installerOptions =
-                listOf(
+                mutableListOf(
+                    "--icon",
+                    "icons/png/canvas_rubric_importer 128x128.png",
                     "--linux-shortcut", // Creates a .desktop file
                     "--linux-menu-group",
                     "Canvas Tools", // (Optional) Menu category

@@ -51,7 +51,7 @@ jobs:
         run: |
           set -e
           VERSION="${{ steps.version.outputs.version }}"
-          FILE="canvas-rubric-importer_${VERSION}_amd64.deb"
+          FILE="canvasrubricimporter_${VERSION}_amd64.deb"
           URL="https://github.com/eslam-allam/canvas-rubric-importer/releases/download/v${VERSION}/${FILE}"
 
           echo "Downloading $URL"

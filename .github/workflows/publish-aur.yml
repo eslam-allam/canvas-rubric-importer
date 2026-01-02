@@ -87,7 +87,7 @@ jobs:
           sed -i "s/^sha256sums=('.*')/sha256sums=('${SHA256}')/" PKGBUILD
 
           echo "Updated PKGBUILD:"
-          grep -E '^(pkgver|sha256sums)' PKGBUILD
+          grep -E '^(pkgver|pkgrel|sha256sums)' PKGBUILD
 
       - name: Regenerate .SRCINFO
         uses: heyhusen/archlinux-package-action@v2

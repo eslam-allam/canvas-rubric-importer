@@ -8,6 +8,7 @@ module io.github.eslam_allam.canvas {
     exports io.github.eslam_allam.canvas.client;
     exports io.github.eslam_allam.canvas.domain;
     exports io.github.eslam_allam.canvas.model.canvas;
+    exports io.github.eslam_allam.canvas.request;
 
     // JavaFX modules
     requires javafx.base;

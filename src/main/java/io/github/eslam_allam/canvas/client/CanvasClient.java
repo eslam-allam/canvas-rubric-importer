@@ -97,6 +97,7 @@ public final class CanvasClient {
         String formBody = toFormBody(formFields);
 
         HttpPost request = new HttpPost(url);
+        request.setHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_FORM_URLENCODED.getMimeType());
         request.setEntity(new StringEntity(formBody, ContentType.APPLICATION_FORM_URLENCODED));
         return this.httpClient.execute(request, response -> {
             if (response.getCode() >= 400) {

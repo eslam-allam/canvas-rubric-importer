@@ -31,13 +31,20 @@ public final class RubricModels {
             List<Rating> ratings) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
+    public static final record Association(
+            Integer id,
+            @JsonProperty("rubric_id") Integer rubricId,
+            @JsonProperty("association_id") Integer associationId,
+            @JsonProperty("use_for_grading") Boolean useForGrading) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static final record Settings(
             @JsonProperty("points_possible") String pointsPossible) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static final record Created(
-            Integer rubric,
-            @JsonProperty("rubric_association") Integer rubricAssociation) {}
+            Rubric rubric,
+            @JsonProperty("rubric_association") Association rubricAssociation) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static final record Rubric(String title, List<Criterion> criteria) {

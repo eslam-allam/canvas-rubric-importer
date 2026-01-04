@@ -863,15 +863,16 @@ public class MainController {
                                         hideScoreTotal,
                                         "grading",
                                         criteria);
-                                String rubricId = response.rubric().toString();
-                                String assocId = response.rubricAssociation().toString();
+                                String rubricTitle = response.rubric().title();
+                                String assocId =
+                                        response.rubricAssociation().id().toString();
 
                                 Platform.runLater(() -> {
                                     setStatus("Done");
                                     showInfo(
                                             "Success",
-                                            "Rubric created successfully!\nRubric ID: "
-                                                    + rubricId
+                                            "Rubric created successfully!\nRubric: "
+                                                    + rubricTitle
                                                     + "\nAssociation ID: "
                                                     + assocId);
                                 });

@@ -8,12 +8,10 @@ import javafx.event.ActionEvent;
 
 public class ConnectionPanelController {
 
-    private final ConnectionPanel view;
     private final ConnectionPanelVM vm;
     private final ConnectionStore store;
 
     public ConnectionPanelController(ConnectionPanel view, ConnectionPanelVM vm, ConnectionStore store) {
-        this.view = view;
         this.vm = vm;
         this.store = store;
 

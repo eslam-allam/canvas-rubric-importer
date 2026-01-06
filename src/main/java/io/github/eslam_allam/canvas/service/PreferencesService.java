@@ -3,7 +3,7 @@ package io.github.eslam_allam.canvas.service;
 import io.github.eslam_allam.canvas.client.CanvasCredentialProvider;
 import java.util.prefs.Preferences;
 
-public class PreferencesService implements CanvasCredentialProvider {
+public class PreferencesService implements CanvasCredentialProvider, ConnectionStore {
 
     private final Preferences prefs;
 

@@ -7,11 +7,12 @@ import io.github.eslam_allam.canvas.model.canvas.Assignment;
 import io.github.eslam_allam.canvas.model.canvas.Course;
 import io.github.eslam_allam.canvas.model.canvas.RubricModels;
 import io.github.eslam_allam.canvas.navigation.StageManager;
+import io.github.eslam_allam.canvas.notification.PopUp;
 import io.github.eslam_allam.canvas.rubric.importing.csv.CsvRubricParser;
 import io.github.eslam_allam.canvas.rubric.importing.csv.RatingHeaderDetector;
 import io.github.eslam_allam.canvas.rubric.importing.csv.RatingHeaderDetector.RatingGroup;
 import io.github.eslam_allam.canvas.service.CanvasRubricService;
-import io.github.eslam_allam.canvas.service.PreferencesService;
+import io.github.eslam_allam.canvas.view.component.ConnectionPanel;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -41,8 +42,8 @@ import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 
 public class MainController {
+    private final ConnectionPanel connectionPanel;
 
-    private final PreferencesService preferencesService;
     private final CanvasRubricService rubricService;
     private final StageManager stageManager;
     private final CanvasClient canvasClient;
@@ -51,8 +52,6 @@ public class MainController {
     private BorderPane root;
     private SplitPane mainCenterPane;
 
-    private TextField baseUrlField;
-    private PasswordField tokenField;
     private ListView<Course> courseListView;
     private ListView<Assignment> assignmentListView;
     private TextField courseIdField;
@@ -73,14 +72,15 @@ public class MainController {
     private final ObservableList<Assignment> assignments = FXCollections.observableArrayList();
 
     public MainController(
-            PreferencesService preferencesService,
+            ConnectionPanel connectionPanel,
             CanvasRubricService rubricService,
             StageManager stageManager,
             CanvasClient canvasClient) {
-        this.preferencesService = preferencesService;
         this.rubricService = rubricService;
         this.stageManager = stageManager;
         this.canvasClient = canvasClient;
+
+        this.connectionPanel = connectionPanel;
     }
 
     public void initAndShow() {
@@ -89,10 +89,8 @@ public class MainController {
 
         VBox topBox = new VBox(10);
         topBox.getStyleClass().add("top-bar");
-        topBox.getChildren().add(wrapInCard("Canvas Connection", buildConnectionPane()));
+        topBox.getChildren().add(wrapInCard("Canvas Connection", connectionPanel.getRoot()));
         root.setTop(topBox);
-
-        loadSettings();
 
         mainCenterPane = new SplitPane();
         mainCenterPane.getStyleClass().add("section-card");
@@ -112,30 +110,6 @@ public class MainController {
                         .toExternalForm());
 
         stageManager.show(scene);
-    }
-
-    private GridPane buildConnectionPane() {
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(5);
-
-        Label baseUrlLabel = new Label("Base URL:");
-        baseUrlField = new TextField();
-
-        Label tokenLabel = new Label("Access token:");
-
-        tokenField = new PasswordField();
-
-        Button saveButton = new Button("Save Settings");
-        saveButton.setOnAction(e -> onSaveSettings());
-
-        grid.add(baseUrlLabel, 0, 0);
-        grid.add(baseUrlField, 1, 0);
-        grid.add(tokenLabel, 0, 1);
-        grid.add(tokenField, 1, 1);
-        grid.add(saveButton, 2, 0, 1, 2);
-
-        return grid;
     }
 
     private VBox buildCoursesPane() {
@@ -331,16 +305,6 @@ public class MainController {
         return box;
     }
 
-    private void onSaveSettings() {
-        preferencesService.saveSettings(baseUrlField.getText(), tokenField.getText());
-        showInfo("Saved", "Settings saved.");
-    }
-
-    private void loadSettings() {
-        baseUrlField.setText(preferencesService.loadBaseUrl());
-        tokenField.setText(preferencesService.loadToken());
-    }
-
     private void onLoadCourses() {
         setStatus("Loading courses...");
         new Thread(
@@ -352,7 +316,7 @@ public class MainController {
                                     setStatus("Loaded " + list.size() + " courses");
                                 });
                             } catch (Exception ex) {
-                                Platform.runLater(() -> showError("Error", ex.getMessage()));
+                                Platform.runLater(() -> PopUp.showError("Error", ex.getMessage()));
                             }
                         },
                         "load-courses")
@@ -372,7 +336,7 @@ public class MainController {
     private void onLoadAssignments() {
         String courseId = courseIdField.getText().trim();
         if (courseId.isEmpty()) {
-            showError("Error", "Please select a course first.");
+            PopUp.showError("Error", "Please select a course first.");
             return;
         }
         setStatus("Loading assignments...");
@@ -385,7 +349,7 @@ public class MainController {
                                     setStatus("Loaded " + list.size() + " assignments");
                                 });
                             } catch (Exception ex) {
-                                Platform.runLater(() -> showError("Error", ex.getMessage()));
+                                Platform.runLater(() -> PopUp.showError("Error", ex.getMessage()));
                             }
                         },
                         "load-assignments")
@@ -414,7 +378,7 @@ public class MainController {
     private void showPreviewFullHeight() {
         String path = csvPathField.getText().trim();
         if (path.isEmpty()) {
-            showError("Error", "Please select a CSV file first.");
+            PopUp.showError("Error", "Please select a CSV file first.");
             return;
         }
         loadRubricPreview(Path.of(path));
@@ -594,7 +558,7 @@ public class MainController {
                                     if (rubricPreviewTable != null) {
                                         rubricPreviewTable.getItems().clear();
                                     }
-                                    showError("Error", "Could not load preview: " + ex.getMessage());
+                                    PopUp.showError("Error", "Could not load preview: " + ex.getMessage());
                                     setStatus("Preview error");
                                 });
                             }
@@ -606,7 +570,7 @@ public class MainController {
     private void onDownloadTemplate() {
         String rubricTitle = titleField.getText().trim();
         if (rubricTitle.isEmpty()) {
-            showError("Error", "Rubric title is required before downloading a template.");
+            PopUp.showError("Error", "Rubric title is required before downloading a template.");
             return;
         }
         String safeName = rubricTitle.replaceAll("[^A-Za-z0-9_.-]+", "_");
@@ -625,17 +589,17 @@ public class MainController {
 
         try (PrintWriter writer = new PrintWriter(file)) {
             writeCsvRow(writer, rubricService.defaultTemplateHeader());
-            showInfo("Template saved", "Saved rubric CSV template to:\n" + file.getAbsolutePath());
+            PopUp.showInfo("Template saved", "Saved rubric CSV template to:\n" + file.getAbsolutePath());
         } catch (IOException ex) {
 
-            showError("Error", "Could not save template: " + ex.getMessage());
+            PopUp.showError("Error", "Could not save template: " + ex.getMessage());
         }
     }
 
     private void onCopyTemplate() {
         String rubricTitle = titleField.getText().trim();
         if (rubricTitle.isEmpty()) {
-            showError("Error", "Rubric title is required before copying a template.");
+            PopUp.showError("Error", "Rubric title is required before copying a template.");
             return;
         }
 
@@ -649,20 +613,20 @@ public class MainController {
         content.putString(header);
 
         Clipboard.getSystemClipboard().setContent(content);
-        showInfo("Template copied", "Rubric CSV header template copied to clipboard.");
+        PopUp.showInfo("Template copied", "Rubric CSV header template copied to clipboard.");
     }
 
     private void onPasteCsvFromClipboard() {
         String csvText = Clipboard.getSystemClipboard().getString();
         if (csvText == null || csvText.trim().isEmpty()) {
-            showError("Error", "Clipboard does not contain any text.");
+            PopUp.showError("Error", "Clipboard does not contain any text.");
             return;
         }
 
         csvText = csvText.replace("\r\n", "\n").replace("\r", "\n");
         String[] lines = csvText.split("\n");
         if (lines.length < 2) {
-            showError("Error", "Clipboard CSV must include a header row and at least one data row.");
+            PopUp.showError("Error", "Clipboard CSV must include a header row and at least one data row.");
             return;
         }
 
@@ -679,12 +643,12 @@ public class MainController {
                 headerCells = parser.getHeaderNames();
             }
         } catch (IOException ex) {
-            showError("Error", "Failed to parse clipboard CSV header: " + ex.getMessage());
+            PopUp.showError("Error", "Failed to parse clipboard CSV header: " + ex.getMessage());
             return;
         }
 
         if (headerCells == null || headerCells.isEmpty()) {
-            showError("Error", "Clipboard CSV has an empty header row.");
+            PopUp.showError("Error", "Clipboard CSV has an empty header row.");
             return;
         }
 
@@ -693,7 +657,7 @@ public class MainController {
         java.util.List<RatingGroup> ratingGroups = RatingHeaderDetector.detect(headerArray);
 
         if (ratingGroups.size() < 2) {
-            showError(
+            PopUp.showError(
                     "Error",
                     "Clipboard CSV must have at least rating1/rating1_points/rating1_desc and"
                             + " rating2/rating2_points/rating2_desc columns.");
@@ -716,7 +680,7 @@ public class MainController {
             }
         }
         if (!extra.isEmpty()) {
-            showError("Error", "Unexpected column(s) in clipboard CSV header: " + String.join(", ", extra));
+            PopUp.showError("Error", "Unexpected column(s) in clipboard CSV header: " + String.join(", ", extra));
             return;
         }
 
@@ -724,23 +688,23 @@ public class MainController {
             java.nio.file.Path tempFile = java.nio.file.Files.createTempFile("canvas_rubric_", ".csv");
             java.nio.file.Files.writeString(tempFile, csvText, java.nio.charset.StandardCharsets.UTF_8);
             csvPathField.setText(tempFile.toAbsolutePath().toString());
-            showInfo(
+            PopUp.showInfo(
                     "Clipboard CSV saved",
                     "Saved clipboard rubric CSV to temporary file:\n" + tempFile.toAbsolutePath());
         } catch (IOException ex) {
-            showError("Error", "Failed to save clipboard CSV to temporary file: " + ex.getMessage());
+            PopUp.showError("Error", "Failed to save clipboard CSV to temporary file: " + ex.getMessage());
         }
     }
 
     private void onCopyRubricCsv() {
         String courseId = courseIdField.getText().trim();
         if (courseId.isEmpty()) {
-            showError("Error", "Please select a course.");
+            PopUp.showError("Error", "Please select a course.");
             return;
         }
         String assignmentId = assignmentIdField.getText().trim();
         if (assignmentId.isEmpty()) {
-            showError("Error", "Please select an assignment.");
+            PopUp.showError("Error", "Please select an assignment.");
             return;
         }
 
@@ -749,7 +713,7 @@ public class MainController {
             if (result.status() == ResultStatus.FAILURE) {
                 Platform.runLater(() -> {
                     setStatus("Error");
-                    showError("Failed to fetch rubric", result.data());
+                    PopUp.showError("Failed to fetch rubric", result.data());
                 });
                 return;
             } else {
@@ -760,7 +724,7 @@ public class MainController {
 
                     Clipboard.getSystemClipboard().setContent(content);
                     setStatus("Copied to clipboard");
-                    showInfo("Done", "Rubric copied to clipboard successfully.");
+                    PopUp.showInfo("Done", "Rubric copied to clipboard successfully.");
                 });
             }
         });
@@ -769,12 +733,12 @@ public class MainController {
     private void onDownloadRubricCsv() {
         String courseId = courseIdField.getText().trim();
         if (courseId.isEmpty()) {
-            showError("Error", "Please select a course.");
+            PopUp.showError("Error", "Please select a course.");
             return;
         }
         String assignmentId = assignmentIdField.getText().trim();
         if (assignmentId.isEmpty()) {
-            showError("Error", "Please select an assignment.");
+            PopUp.showError("Error", "Please select an assignment.");
             return;
         }
 
@@ -791,7 +755,7 @@ public class MainController {
             if (result.status() == ResultStatus.FAILURE) {
                 Platform.runLater(() -> {
                     setStatus("Error");
-                    showError("Failed to Download Rubric", result.data());
+                    PopUp.showError("Failed to Download Rubric", result.data());
                 });
             } else {
                 try {
@@ -799,13 +763,13 @@ public class MainController {
                 } catch (IOException ex) {
                     Platform.runLater(() -> {
                         setStatus("Error");
-                        showError("Failed to Save Rubric", ex.getMessage());
+                        PopUp.showError("Failed to Save Rubric", ex.getMessage());
                     });
                     return;
                 }
                 Platform.runLater(() -> {
                     setStatus("Done");
-                    showInfo("Rubric Downloaded", "Saved rubric CSV to:\n" + file.getAbsolutePath());
+                    PopUp.showInfo("Rubric Downloaded", "Saved rubric CSV to:\n" + file.getAbsolutePath());
                 });
             }
         });
@@ -814,22 +778,22 @@ public class MainController {
     private void onCreate() {
         String courseId = courseIdField.getText().trim();
         if (courseId.isEmpty()) {
-            showError("Error", "Please select a course.");
+            PopUp.showError("Error", "Please select a course.");
             return;
         }
         String assignmentId = assignmentIdField.getText().trim();
         if (assignmentId.isEmpty()) {
-            showError("Error", "Please select an assignment.");
+            PopUp.showError("Error", "Please select an assignment.");
             return;
         }
         String title = titleField.getText().trim();
         if (title.isEmpty()) {
-            showError("Error", "Rubric title is required.");
+            PopUp.showError("Error", "Rubric title is required.");
             return;
         }
         String csvPath = csvPathField.getText().trim();
         if (csvPath.isEmpty()) {
-            showError("Error", "CSV file is required.");
+            PopUp.showError("Error", "CSV file is required.");
             return;
         }
 
@@ -869,7 +833,7 @@ public class MainController {
 
                                 Platform.runLater(() -> {
                                     setStatus("Done");
-                                    showInfo(
+                                    PopUp.showInfo(
                                             "Success",
                                             "Rubric created successfully!\nRubric: "
                                                     + rubricTitle
@@ -879,7 +843,7 @@ public class MainController {
                             } catch (Exception ex) {
                                 Platform.runLater(() -> {
                                     setStatus("Error");
-                                    showError("Error", ex.getMessage());
+                                    PopUp.showError("Error", ex.getMessage());
                                 });
                             }
                         },
@@ -889,22 +853,6 @@ public class MainController {
 
     private void setStatus(String msg) {
         statusLabel.setText(msg);
-    }
-
-    private void showError(String title, String msg) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(msg);
-        alert.showAndWait();
-    }
-
-    private void showInfo(String title, String msg) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(msg);
-        alert.showAndWait();
     }
 
     private void writeCsvRow(PrintWriter writer, List<String> cells) {

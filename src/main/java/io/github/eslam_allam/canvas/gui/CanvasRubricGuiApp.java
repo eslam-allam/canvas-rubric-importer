@@ -7,6 +7,7 @@ import io.github.eslam_allam.canvas.navigation.StageManager;
 import io.github.eslam_allam.canvas.service.CanvasRubricService;
 import io.github.eslam_allam.canvas.service.PreferencesService;
 import io.github.eslam_allam.canvas.view.component.ConnectionPanel;
+import io.github.eslam_allam.canvas.view.component.SimpleConnectionPanel;
 import io.github.eslam_allam.canvas.viewmodel.ConnectionPanelVM;
 import java.net.URISyntaxException;
 import javafx.application.Application;
@@ -23,7 +24,7 @@ public class CanvasRubricGuiApp extends Application {
         CanvasRubricService rubricService = new CanvasRubricService(client);
 
         ConnectionPanelVM connectionPanelVM = new ConnectionPanelVM();
-        ConnectionPanel connectionPanel = new ConnectionPanel();
+        ConnectionPanel connectionPanel = new SimpleConnectionPanel();
         ConnectionPanelController connectionPanelController =
                 new ConnectionPanelController(connectionPanel, connectionPanelVM, preferencesService);
 

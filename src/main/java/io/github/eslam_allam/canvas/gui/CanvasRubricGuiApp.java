@@ -4,11 +4,14 @@ import io.github.eslam_allam.canvas.client.CanvasClient;
 import io.github.eslam_allam.canvas.controller.ConnectionPanelController;
 import io.github.eslam_allam.canvas.controller.MainController;
 import io.github.eslam_allam.canvas.navigation.StageManager;
+import io.github.eslam_allam.canvas.notification.StatusNotifier;
 import io.github.eslam_allam.canvas.service.CanvasRubricService;
 import io.github.eslam_allam.canvas.service.PreferencesService;
 import io.github.eslam_allam.canvas.view.component.ConnectionPanel;
 import io.github.eslam_allam.canvas.view.component.SimpleConnectionPanel;
+import io.github.eslam_allam.canvas.view.component.StatusLabel;
 import io.github.eslam_allam.canvas.viewmodel.ConnectionPanelVM;
+import io.github.eslam_allam.canvas.viewmodel.StatusLabelVM;
 import java.net.URISyntaxException;
 import javafx.application.Application;
 import javafx.stage.Stage;
@@ -20,6 +23,10 @@ public class CanvasRubricGuiApp extends Application {
         StageManager stageManager = new StageManager(primaryStage);
         PreferencesService preferencesService = new PreferencesService(CanvasRubricGuiApp.class);
 
+        StatusLabelVM statusLabelVM = new StatusLabelVM();
+        StatusLabel statusLabel = new StatusLabel();
+        StatusNotifier statusNotifier = new StatusNotifier(statusLabelVM);
+
         CanvasClient client = new CanvasClient(preferencesService);
         CanvasRubricService rubricService = new CanvasRubricService(client);
 
@@ -28,7 +35,8 @@ public class CanvasRubricGuiApp extends Application {
         ConnectionPanelController connectionPanelController =
                 new ConnectionPanelController(connectionPanel, connectionPanelVM, preferencesService);
 
-        MainController controller = new MainController(connectionPanel, rubricService, stageManager, client);
+        MainController controller =
+                new MainController(connectionPanel, statusLabel, rubricService, stageManager, client, statusNotifier);
         controller.initAndShow();
     }
 

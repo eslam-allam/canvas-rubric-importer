@@ -8,11 +8,13 @@ import io.github.eslam_allam.canvas.model.canvas.Course;
 import io.github.eslam_allam.canvas.model.canvas.RubricModels;
 import io.github.eslam_allam.canvas.navigation.StageManager;
 import io.github.eslam_allam.canvas.notification.PopUp;
+import io.github.eslam_allam.canvas.notification.StatusNotifier;
 import io.github.eslam_allam.canvas.rubric.importing.csv.CsvRubricParser;
 import io.github.eslam_allam.canvas.rubric.importing.csv.RatingHeaderDetector;
 import io.github.eslam_allam.canvas.rubric.importing.csv.RatingHeaderDetector.RatingGroup;
 import io.github.eslam_allam.canvas.service.CanvasRubricService;
 import io.github.eslam_allam.canvas.view.component.ConnectionPanel;
+import io.github.eslam_allam.canvas.view.component.StatusLabel;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -43,6 +45,8 @@ import javafx.stage.FileChooser;
 
 public class MainController {
     private final ConnectionPanel connectionPanel;
+    private final StatusLabel statusLabel;
+    private final StatusNotifier statusNotifier;
 
     private final CanvasRubricService rubricService;
     private final StageManager stageManager;
@@ -65,7 +69,6 @@ public class MainController {
     private CheckBox decodeHtmlCheck;
     private Button showPreviewBtn;
     private Button backBtn;
-    private Label statusLabel;
     private TableView<RubricRow> rubricPreviewTable;
 
     private final ObservableList<Course> courses = FXCollections.observableArrayList();
@@ -73,14 +76,18 @@ public class MainController {
 
     public MainController(
             ConnectionPanel connectionPanel,
+            StatusLabel statusLabel,
             CanvasRubricService rubricService,
             StageManager stageManager,
-            CanvasClient canvasClient) {
+            CanvasClient canvasClient,
+            StatusNotifier statusNotifier) {
         this.rubricService = rubricService;
         this.stageManager = stageManager;
         this.canvasClient = canvasClient;
+        this.statusLabel = statusLabel;
 
         this.connectionPanel = connectionPanel;
+        this.statusNotifier = statusNotifier;
     }
 
     public void initAndShow() {
@@ -240,9 +247,6 @@ public class MainController {
         Button quitBtn = new Button("Quit");
         quitBtn.setOnAction(e -> Platform.exit());
 
-        statusLabel = new Label("Idle");
-        statusLabel.getStyleClass().add("status-label");
-
         int row = 0;
 
         grid.add(new Label("Selected Course ID:"), 0, row);
@@ -281,7 +285,7 @@ public class MainController {
         GridPane.setMargin(rubricOptions, new Insets(5));
         row += 3;
 
-        grid.add(statusLabel, 0, row++, 3, 1);
+        grid.add(statusLabel.getRoot(), 0, row++, 3, 1);
 
         HBox buttons = new HBox(10, createBtn, quitBtn);
         buttons.getStyleClass().add("bottom-actions");
@@ -306,14 +310,14 @@ public class MainController {
     }
 
     private void onLoadCourses() {
-        setStatus("Loading courses...");
+        this.statusNotifier.setStatus("Loading courses...");
         new Thread(
                         () -> {
                             try {
                                 List<Course> list = this.canvasClient.listCourses();
                                 Platform.runLater(() -> {
                                     courses.setAll(list);
-                                    setStatus("Loaded " + list.size() + " courses");
+                                    this.statusNotifier.setStatus("Loaded " + list.size() + " courses");
                                 });
                             } catch (Exception ex) {
                                 Platform.runLater(() -> PopUp.showError("Error", ex.getMessage()));
@@ -339,14 +343,14 @@ public class MainController {
             PopUp.showError("Error", "Please select a course first.");
             return;
         }
-        setStatus("Loading assignments...");
+        this.statusNotifier.setStatus("Loading assignments...");
         new Thread(
                         () -> {
                             try {
                                 List<Assignment> list = this.canvasClient.listAssignments(courseId);
                                 Platform.runLater(() -> {
                                     assignments.setAll(list);
-                                    setStatus("Loaded " + list.size() + " assignments");
+                                    this.statusNotifier.setStatus("Loaded " + list.size() + " assignments");
                                 });
                             } catch (Exception ex) {
                                 Platform.runLater(() -> PopUp.showError("Error", ex.getMessage()));
@@ -497,7 +501,7 @@ public class MainController {
 
     private void loadRubricPreview(Path csvPath) {
 
-        setStatus("Loading preview...");
+        this.statusNotifier.setStatus("Loading preview...");
         new Thread(
                         () -> {
                             try {
@@ -550,7 +554,7 @@ public class MainController {
                                     root.setCenter(previewPane);
 
                                     BorderPane.setMargin(previewPane, new Insets(5, 0, 5, 0));
-                                    setStatus("Preview loaded");
+                                    this.statusNotifier.setStatus("Preview loaded");
                                 });
 
                             } catch (Exception ex) {
@@ -559,7 +563,7 @@ public class MainController {
                                         rubricPreviewTable.getItems().clear();
                                     }
                                     PopUp.showError("Error", "Could not load preview: " + ex.getMessage());
-                                    setStatus("Preview error");
+                                    this.statusNotifier.setStatus("Preview error");
                                 });
                             }
                         },
@@ -708,11 +712,11 @@ public class MainController {
             return;
         }
 
-        setStatus("Downloading rubric...");
+        this.statusNotifier.setStatus("Downloading rubric...");
         rubricService.getCanvasRubricCSV(courseId, assignmentId, result -> {
             if (result.status() == ResultStatus.FAILURE) {
                 Platform.runLater(() -> {
-                    setStatus("Error");
+                    this.statusNotifier.setStatus("Error");
                     PopUp.showError("Failed to fetch rubric", result.data());
                 });
                 return;
@@ -723,7 +727,7 @@ public class MainController {
                     content.putString(result.data());
 
                     Clipboard.getSystemClipboard().setContent(content);
-                    setStatus("Copied to clipboard");
+                    this.statusNotifier.setStatus("Copied to clipboard");
                     PopUp.showInfo("Done", "Rubric copied to clipboard successfully.");
                 });
             }
@@ -750,11 +754,11 @@ public class MainController {
             return;
         }
 
-        setStatus("Downloading rubric...");
+        this.statusNotifier.setStatus("Downloading rubric...");
         rubricService.getCanvasRubricCSV(courseId, assignmentId, result -> {
             if (result.status() == ResultStatus.FAILURE) {
                 Platform.runLater(() -> {
-                    setStatus("Error");
+                    this.statusNotifier.setStatus("Error");
                     PopUp.showError("Failed to Download Rubric", result.data());
                 });
             } else {
@@ -762,13 +766,13 @@ public class MainController {
                     Files.writeString(file.toPath(), result.data(), StandardCharsets.UTF_8);
                 } catch (IOException ex) {
                     Platform.runLater(() -> {
-                        setStatus("Error");
+                        this.statusNotifier.setStatus("Error");
                         PopUp.showError("Failed to Save Rubric", ex.getMessage());
                     });
                     return;
                 }
                 Platform.runLater(() -> {
-                    setStatus("Done");
+                    this.statusNotifier.setStatus("Done");
                     PopUp.showInfo("Rubric Downloaded", "Saved rubric CSV to:\n" + file.getAbsolutePath());
                 });
             }
@@ -802,7 +806,7 @@ public class MainController {
         boolean hideScoreTotal = hideScoreTotalCheck.isSelected();
         boolean syncPoints = syncPointsCheck.isSelected();
 
-        setStatus("Reading CSV...");
+        this.statusNotifier.setStatus("Reading CSV...");
         new Thread(
                         () -> {
                             try {
@@ -813,11 +817,12 @@ public class MainController {
                                 double total = parsed.totalPoints();
 
                                 if (syncPoints) {
-                                    Platform.runLater(() -> setStatus("Updating assignment points..."));
+                                    Platform.runLater(
+                                            () -> this.statusNotifier.setStatus("Updating assignment points..."));
                                     rubricService.updateAssignmentPoints(courseId, assignmentId, total);
                                 }
 
-                                Platform.runLater(() -> setStatus("Creating rubric..."));
+                                Platform.runLater(() -> this.statusNotifier.setStatus("Creating rubric..."));
                                 RubricModels.Created response = rubricService.createRubric(
                                         courseId,
                                         assignmentId,
@@ -832,7 +837,7 @@ public class MainController {
                                         response.rubricAssociation().id().toString();
 
                                 Platform.runLater(() -> {
-                                    setStatus("Done");
+                                    this.statusNotifier.setStatus("Done");
                                     PopUp.showInfo(
                                             "Success",
                                             "Rubric created successfully!\nRubric: "
@@ -842,17 +847,13 @@ public class MainController {
                                 });
                             } catch (Exception ex) {
                                 Platform.runLater(() -> {
-                                    setStatus("Error");
+                                    this.statusNotifier.setStatus("Error");
                                     PopUp.showError("Error", ex.getMessage());
                                 });
                             }
                         },
                         "create-rubric")
                 .start();
-    }
-
-    private void setStatus(String msg) {
-        statusLabel.setText(msg);
     }
 
     private void writeCsvRow(PrintWriter writer, List<String> cells) {

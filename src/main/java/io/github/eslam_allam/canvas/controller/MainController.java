@@ -1,6 +1,5 @@
 package io.github.eslam_allam.canvas.controller;
 
-import io.github.eslam_allam.canvas.client.CanvasClient;
 import io.github.eslam_allam.canvas.domain.ResultStatus;
 import io.github.eslam_allam.canvas.domain.RubricRow;
 import io.github.eslam_allam.canvas.model.canvas.Assignment;
@@ -14,7 +13,9 @@ import io.github.eslam_allam.canvas.rubric.importing.csv.RatingHeaderDetector;
 import io.github.eslam_allam.canvas.rubric.importing.csv.RatingHeaderDetector.RatingGroup;
 import io.github.eslam_allam.canvas.service.CanvasRubricService;
 import io.github.eslam_allam.canvas.view.component.ConnectionPanel;
+import io.github.eslam_allam.canvas.view.component.ListPane;
 import io.github.eslam_allam.canvas.view.component.StatusLabel;
+import io.github.eslam_allam.canvas.viewmodel.ListPaneVM;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -27,8 +28,6 @@ import java.util.List;
 import java.util.Objects;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -48,16 +47,16 @@ public class MainController {
     private final StatusLabel statusLabel;
     private final StatusNotifier statusNotifier;
 
+    private final ListPane<Course> coursePane;
+    private final ListPane<Assignment> assignmentPane;
+    private final ListPaneVM<Assignment> assignmentPaneVM;
+
     private final CanvasRubricService rubricService;
     private final StageManager stageManager;
-    private final CanvasClient canvasClient;
 
     // UI state and controls
-    private BorderPane root;
     private SplitPane mainCenterPane;
-
-    private ListView<Course> courseListView;
-    private ListView<Assignment> assignmentListView;
+    private BorderPane root;
     private TextField courseIdField;
     private TextField assignmentIdField;
     private TextField titleField;
@@ -71,23 +70,28 @@ public class MainController {
     private Button backBtn;
     private TableView<RubricRow> rubricPreviewTable;
 
-    private final ObservableList<Course> courses = FXCollections.observableArrayList();
-    private final ObservableList<Assignment> assignments = FXCollections.observableArrayList();
-
     public MainController(
             ConnectionPanel connectionPanel,
             StatusLabel statusLabel,
             CanvasRubricService rubricService,
             StageManager stageManager,
-            CanvasClient canvasClient,
-            StatusNotifier statusNotifier) {
+            StatusNotifier statusNotifier,
+            ListPane<Course> coursePane,
+            ListPaneVM<Course> coursePaneVM,
+            ListPane<Assignment> assignmentPane,
+            ListPaneVM<Assignment> assignmentPaneVM) {
         this.rubricService = rubricService;
         this.stageManager = stageManager;
-        this.canvasClient = canvasClient;
         this.statusLabel = statusLabel;
+        this.coursePane = coursePane;
+        this.assignmentPane = assignmentPane;
+        this.assignmentPaneVM = assignmentPaneVM;
 
         this.connectionPanel = connectionPanel;
         this.statusNotifier = statusNotifier;
+
+        coursePaneVM.onSelectedChange(this::onCourseSelected);
+        assignmentPaneVM.onSelectedChange(this::onAssignmentSelected);
     }
 
     public void initAndShow() {
@@ -101,8 +105,8 @@ public class MainController {
 
         mainCenterPane = new SplitPane();
         mainCenterPane.getStyleClass().add("section-card");
-        mainCenterPane.getItems().add(buildCoursesPane());
-        mainCenterPane.getItems().add(buildAssignmentsPane());
+        mainCenterPane.getItems().add(this.coursePane.getRoot());
+        mainCenterPane.getItems().add(this.assignmentPane.getRoot());
         mainCenterPane.setDividerPositions(0.5);
         root.setCenter(mainCenterPane);
         BorderPane.setMargin(mainCenterPane, new Insets(5, 0, 5, 0));
@@ -117,73 +121,6 @@ public class MainController {
                         .toExternalForm());
 
         stageManager.show(scene);
-    }
-
-    private VBox buildCoursesPane() {
-        VBox box = new VBox(10);
-        box.setPadding(new Insets(5));
-        Label label = new Label("Courses");
-
-        courseListView = new ListView<>(courses);
-        courseListView.setCellFactory(list -> new ListCell<>() {
-            @Override
-            protected void updateItem(Course item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    String name = item.name();
-                    String code = item.courseCode();
-                    if (!code.isEmpty()) {
-                        setText(name + " [" + code + "]");
-                    } else {
-                        setText(name);
-                    }
-                }
-            }
-        });
-
-        courseListView
-                .getSelectionModel()
-                .selectedItemProperty()
-                .addListener((obs, oldV, newV) -> onCourseSelected(newV));
-
-        Button loadCoursesBtn = new Button("Load Courses");
-        loadCoursesBtn.setOnAction(e -> onLoadCourses());
-
-        box.getChildren().addAll(label, courseListView, loadCoursesBtn);
-        return box;
-    }
-
-    private VBox buildAssignmentsPane() {
-        VBox box = new VBox(10);
-        box.setPadding(new Insets(5));
-        Label label = new Label("Assignments");
-
-        assignmentListView = new ListView<>(assignments);
-        assignmentListView.setCellFactory(list -> new ListCell<>() {
-            @Override
-            protected void updateItem(Assignment item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    String name = item.name();
-                    setText(name);
-                }
-            }
-        });
-
-        assignmentListView
-                .getSelectionModel()
-                .selectedItemProperty()
-                .addListener((obs, oldV, newV) -> onAssignmentSelected(newV));
-
-        Button loadAssignmentsBtn = new Button("Load Assignments");
-        loadAssignmentsBtn.setOnAction(e -> onLoadAssignments());
-
-        box.getChildren().addAll(label, assignmentListView, loadAssignmentsBtn);
-        return box;
     }
 
     private GridPane buildRubricPane() {
@@ -309,55 +246,14 @@ public class MainController {
         return box;
     }
 
-    private void onLoadCourses() {
-        this.statusNotifier.setStatus("Loading courses...");
-        new Thread(
-                        () -> {
-                            try {
-                                List<Course> list = this.canvasClient.listCourses();
-                                Platform.runLater(() -> {
-                                    courses.setAll(list);
-                                    this.statusNotifier.setStatus("Loaded " + list.size() + " courses");
-                                });
-                            } catch (Exception ex) {
-                                Platform.runLater(() -> PopUp.showError("Error", ex.getMessage()));
-                            }
-                        },
-                        "load-courses")
-                .start();
-    }
-
     private void onCourseSelected(Course course) {
         if (course == null) {
             return;
         }
         String id = course.id().toString();
         courseIdField.setText(id);
-        assignments.clear();
+        this.assignmentPaneVM.items().clear();
         assignmentIdField.clear();
-    }
-
-    private void onLoadAssignments() {
-        String courseId = courseIdField.getText().trim();
-        if (courseId.isEmpty()) {
-            PopUp.showError("Error", "Please select a course first.");
-            return;
-        }
-        this.statusNotifier.setStatus("Loading assignments...");
-        new Thread(
-                        () -> {
-                            try {
-                                List<Assignment> list = this.canvasClient.listAssignments(courseId);
-                                Platform.runLater(() -> {
-                                    assignments.setAll(list);
-                                    this.statusNotifier.setStatus("Loaded " + list.size() + " assignments");
-                                });
-                            } catch (Exception ex) {
-                                Platform.runLater(() -> PopUp.showError("Error", ex.getMessage()));
-                            }
-                        },
-                        "load-assignments")
-                .start();
     }
 
     private void onAssignmentSelected(Assignment assignment) {

@@ -17,8 +17,14 @@ public final class SimpleListPane<T> implements ListPane<T> {
 
     private final VBox root;
     private final Button loadAssignmentsBtn;
+    private final String title;
+
+    public String getTitle() {
+        return title;
+    }
 
     public SimpleListPane(String title, Function<T, String> itemFormatter) {
+        this.title = title;
         this.listView = new ListView<>();
         this.listView.setCellFactory(list -> new ListCell<>() {
             @Override
@@ -37,7 +43,7 @@ public final class SimpleListPane<T> implements ListPane<T> {
 
         Label label = new Label(title);
 
-        loadAssignmentsBtn = new Button("Load Assignments");
+        loadAssignmentsBtn = new Button("Load " + title);
 
         this.root.getChildren().addAll(label, listView, loadAssignmentsBtn);
     }

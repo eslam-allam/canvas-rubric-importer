@@ -15,6 +15,7 @@ import io.github.eslam_allam.canvas.service.CanvasRubricService;
 import io.github.eslam_allam.canvas.view.component.ConnectionPanel;
 import io.github.eslam_allam.canvas.view.component.ListPane;
 import io.github.eslam_allam.canvas.view.component.StatusLabel;
+import io.github.eslam_allam.canvas.view.section.CoursesAndAssignmentsSection;
 import io.github.eslam_allam.canvas.viewmodel.ListPaneVM;
 import java.io.File;
 import java.io.IOException;
@@ -50,6 +51,7 @@ public class MainController {
     private final ListPane<Course> coursePane;
     private final ListPane<Assignment> assignmentPane;
     private final ListPaneVM<Assignment> assignmentPaneVM;
+    private final CoursesAndAssignmentsSection coursesAndAssignmentsSection;
 
     private final CanvasRubricService rubricService;
     private final StageManager stageManager;
@@ -90,6 +92,8 @@ public class MainController {
         this.connectionPanel = connectionPanel;
         this.statusNotifier = statusNotifier;
 
+        this.coursesAndAssignmentsSection = new CoursesAndAssignmentsSection(coursePane, assignmentPane);
+
         coursePaneVM.onSelectedChange(this::onCourseSelected);
         assignmentPaneVM.onSelectedChange(this::onAssignmentSelected);
     }
@@ -103,13 +107,8 @@ public class MainController {
         topBox.getChildren().add(wrapInCard("Canvas Connection", connectionPanel.getRoot()));
         root.setTop(topBox);
 
-        mainCenterPane = new SplitPane();
-        mainCenterPane.getStyleClass().add("section-card");
-        mainCenterPane.getItems().add(this.coursePane.getRoot());
-        mainCenterPane.getItems().add(this.assignmentPane.getRoot());
-        mainCenterPane.setDividerPositions(0.5);
-        root.setCenter(mainCenterPane);
-        BorderPane.setMargin(mainCenterPane, new Insets(5, 0, 5, 0));
+        root.setCenter(this.coursesAndAssignmentsSection.getRoot());
+        BorderPane.setMargin(this.coursesAndAssignmentsSection.getRoot(), new Insets(5, 0, 5, 0));
 
         VBox bottomBox = new VBox(10);
         bottomBox.getChildren().add(wrapInCard("Rubric Configuration", buildRubricPane()));

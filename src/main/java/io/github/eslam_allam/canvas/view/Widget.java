@@ -1,9 +1,5 @@
 package io.github.eslam_allam.canvas.view;
 
-import javafx.scene.Node;
-
-public interface Widget<T> {
+public interface Widget<T> extends View {
     void bind(T vm);
-
-    Node getRoot();
 }

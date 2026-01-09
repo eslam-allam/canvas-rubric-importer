@@ -164,11 +164,11 @@ public final class RubricConfiguration implements Widget<RubricConfigurationVM> 
         this.syncPointsCheck.selectedProperty().bindBidirectional(vm.syncPoints());
         this.decodeHtmlCheck.selectedProperty().bindBidirectional(vm.decodeHtml());
 
-        this.showPreviewBtn.visibleProperty().bind(vm.previewButtonVisible());
-        this.showPreviewBtn.managedProperty().bind(vm.previewButtonVisible());
+        this.showPreviewBtn.visibleProperty().bindBidirectional(vm.previewButtonVisible());
+        this.showPreviewBtn.managedProperty().bindBidirectional(vm.previewButtonVisible());
 
-        this.backBtn.visibleProperty().bind(vm.backBtnVisible());
-        this.backBtn.managedProperty().bind(vm.backBtnVisible());
+        this.backBtn.visibleProperty().bindBidirectional(vm.backBtnVisible());
+        this.backBtn.managedProperty().bindBidirectional(vm.backBtnVisible());
     }
 
     public void onBrowseClick(EventHandler<ActionEvent> callback) {
@@ -205,5 +205,9 @@ public final class RubricConfiguration implements Widget<RubricConfigurationVM> 
 
     public void onCsvPathChange(Consumer<String> callback) {
         this.csvPathField.textProperty().addListener((obs, oldVal, newVal) -> callback.accept(newVal));
+    }
+
+    public void onCreateClick(EventHandler<ActionEvent> callback) {
+        this.createBtn.setOnAction(callback);
     }
 }

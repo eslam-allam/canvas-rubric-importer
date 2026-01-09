@@ -96,8 +96,7 @@ public class CanvasRubricService {
     }
 
     public CsvRubricParser.ParsedRubric parseRubricCsv(Path csvPath, boolean decodeHtml) throws IOException {
-        CsvRubricParser parser = new CsvRubricParser(decodeHtml);
-        return parser.parse(csvPath);
+        return CsvRubricParser.parse(csvPath, decodeHtml);
     }
 
     public void updateAssignmentPoints(String courseId, String assignmentId, double totalPoints)

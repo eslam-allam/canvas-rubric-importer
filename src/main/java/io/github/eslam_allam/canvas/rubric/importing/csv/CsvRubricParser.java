@@ -17,17 +17,9 @@ public final class CsvRubricParser {
 
     public record ParsedRubric(List<RubricModels.Criterion> criteria, double totalPoints) {}
 
-    private final boolean decodeHtmlEntities;
+    private CsvRubricParser() {}
 
-    public CsvRubricParser() {
-        this(true);
-    }
-
-    public CsvRubricParser(boolean decodeHtmlEntities) {
-        this.decodeHtmlEntities = decodeHtmlEntities;
-    }
-
-    public ParsedRubric parse(Path csvPath) throws IOException {
+    public static ParsedRubric parse(Path csvPath, boolean decodeHtmlEntities) throws IOException {
 
         try (BufferedReader reader = Files.newBufferedReader(csvPath, StandardCharsets.UTF_8);
                 CSVParser parser = CSVFormat.DEFAULT
@@ -66,23 +58,23 @@ public final class CsvRubricParser {
                     continue;
                 }
 
-                String criterion = normalizeText(record.get(criterionIdx).trim());
+                String criterion = normalizeText(record.get(criterionIdx).trim(), decodeHtmlEntities);
 
                 if (criterion.isEmpty()) {
                     throw new IllegalArgumentException("Row " + rowNum + ": empty criterion.");
                 }
 
                 String desc = criterionDescIdx >= 0
-                        ? normalizeText(record.get(criterionDescIdx).trim())
+                        ? normalizeText(record.get(criterionDescIdx).trim(), decodeHtmlEntities)
                         : "";
 
                 List<RubricModels.Rating> ratings = new ArrayList<>();
                 boolean hasZeroRating = false;
                 boolean hasPositiveRating = false;
                 for (RatingHeaderDetector.RatingGroup g : ratingGroups) {
-                    String name = normalizeText(getField(record, headers, g.nameColumn()));
+                    String name = normalizeText(getField(record, headers, g.nameColumn()), decodeHtmlEntities);
                     String ptsRaw = getField(record, headers, g.pointsColumn());
-                    String longDesc = normalizeText(getField(record, headers, g.descColumn()));
+                    String longDesc = normalizeText(getField(record, headers, g.descColumn()), decodeHtmlEntities);
 
                     if (name.isBlank() && ptsRaw.isBlank() && longDesc.isBlank()) {
                         continue;
@@ -168,7 +160,7 @@ public final class CsvRubricParser {
         return -1;
     }
 
-    private String normalizeText(String s) {
+    private static String normalizeText(String s, boolean decodeHtmlEntities) {
         if (s == null || s.isEmpty()) {
             return "";
         }

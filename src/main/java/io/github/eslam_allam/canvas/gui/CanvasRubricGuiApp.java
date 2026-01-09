@@ -4,20 +4,27 @@ import io.github.eslam_allam.canvas.client.CanvasClient;
 import io.github.eslam_allam.canvas.controller.ConnectionPanelController;
 import io.github.eslam_allam.canvas.controller.ListPaneController;
 import io.github.eslam_allam.canvas.controller.MainController;
+import io.github.eslam_allam.canvas.controller.RubricConfigurationController;
 import io.github.eslam_allam.canvas.model.canvas.Assignment;
 import io.github.eslam_allam.canvas.model.canvas.Course;
+import io.github.eslam_allam.canvas.navigation.RestorableSceneSwitcher;
+import io.github.eslam_allam.canvas.navigation.SimpleRestorableSceneSwitcher;
 import io.github.eslam_allam.canvas.navigation.StageManager;
 import io.github.eslam_allam.canvas.notification.SimpleStatusNotifier;
 import io.github.eslam_allam.canvas.notification.StatusNotifier;
 import io.github.eslam_allam.canvas.service.CanvasRubricService;
 import io.github.eslam_allam.canvas.service.PreferencesService;
+import io.github.eslam_allam.canvas.view.MainView;
 import io.github.eslam_allam.canvas.view.component.ConnectionPanel;
 import io.github.eslam_allam.canvas.view.component.ListPane;
+import io.github.eslam_allam.canvas.view.component.RubricConfiguration;
 import io.github.eslam_allam.canvas.view.component.SimpleConnectionPanel;
 import io.github.eslam_allam.canvas.view.component.SimpleListPane;
 import io.github.eslam_allam.canvas.view.component.StatusLabel;
+import io.github.eslam_allam.canvas.view.section.CoursesAndAssignmentsSection;
 import io.github.eslam_allam.canvas.viewmodel.ConnectionPanelVM;
 import io.github.eslam_allam.canvas.viewmodel.ListPaneVM;
+import io.github.eslam_allam.canvas.viewmodel.RubricConfigurationVM;
 import io.github.eslam_allam.canvas.viewmodel.StatusLabelVM;
 import java.net.URISyntaxException;
 import javafx.application.Application;
@@ -57,16 +64,27 @@ public class CanvasRubricGuiApp extends Application {
                 () -> client.listAssignments(coursesPaneVM.selected().get().id().toString()),
                 statusNotifier);
 
+        CoursesAndAssignmentsSection coursesAndAssignmentsSection =
+                new CoursesAndAssignmentsSection(coursesPane, assignmentsPane);
+        MainView mainView = new MainView();
+        RubricConfigurationVM rubricConfigurationVM = new RubricConfigurationVM();
+        RubricConfiguration rubricConfiguration = new RubricConfiguration(statusLabel);
+
         MainController controller = new MainController(
-                connectionPanel,
-                statusLabel,
-                rubricService,
-                stageManager,
+                stageManager, mainView, connectionPanel, rubricConfiguration, coursesAndAssignmentsSection);
+
+        RestorableSceneSwitcher sceneSwitcher =
+                new SimpleRestorableSceneSwitcher(mainView::setCenter, controller::restoreCenter);
+        RubricConfigurationController rubricConfigurationController = new RubricConfigurationController(
+                rubricConfiguration,
+                rubricConfigurationVM,
+                stageManager.getPrimaryStage(),
+                sceneSwitcher,
                 statusNotifier,
-                coursesPane,
+                rubricService,
                 coursesPaneVM,
-                assignmentsPane,
                 assignmentsPaneVM);
+
         controller.initAndShow();
     }
 

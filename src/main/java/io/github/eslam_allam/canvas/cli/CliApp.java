@@ -67,9 +67,7 @@ public final class CliApp {
             }
         }
 
-        CsvRubricParser parser = new CsvRubricParser(decodeHtml);
-
-        CsvRubricParser.ParsedRubric parsed = parser.parse(csvPath);
+        CsvRubricParser.ParsedRubric parsed = CsvRubricParser.parse(csvPath, decodeHtml);
         List<RubricModels.Criterion> criteria = parsed.criteria();
         double totalPoints = parsed.totalPoints();
 

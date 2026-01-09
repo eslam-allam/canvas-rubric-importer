@@ -24,11 +24,9 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import javafx.application.Platform;
-import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -36,11 +34,7 @@ import javafx.scene.control.*;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 
 public class MainController {
@@ -59,17 +53,6 @@ public class MainController {
     // UI state and controls
     private SplitPane mainCenterPane;
     private BorderPane root;
-    private TextField courseIdField;
-    private TextField assignmentIdField;
-    private TextField titleField;
-    private TextField csvPathField;
-    private CheckBox freeFormCommentsCheck;
-    private CheckBox useForGradingCheck;
-    private CheckBox hideScoreTotalCheck;
-    private CheckBox syncPointsCheck;
-    private CheckBox decodeHtmlCheck;
-    private Button showPreviewBtn;
-    private Button backBtn;
     private TableView<RubricRow> rubricPreviewTable;
 
     public MainController(
@@ -122,114 +105,6 @@ public class MainController {
         stageManager.show(scene);
     }
 
-    private GridPane buildRubricPane() {
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(5);
-
-        courseIdField = new TextField();
-        courseIdField.setEditable(false);
-        courseIdField.getStyleClass().add("readonly");
-
-        assignmentIdField = new TextField();
-        assignmentIdField.setEditable(false);
-        assignmentIdField.getStyleClass().add("readonly");
-
-        titleField = new TextField();
-        csvPathField = new TextField();
-
-        freeFormCommentsCheck = new CheckBox("Free-form comments");
-        freeFormCommentsCheck.setSelected(true);
-        useForGradingCheck = new CheckBox("Use for grading");
-        useForGradingCheck.setSelected(true);
-        hideScoreTotalCheck = new CheckBox("Hide score total");
-        syncPointsCheck = new CheckBox("Sync assignment points to rubric total");
-        decodeHtmlCheck = new CheckBox("Decode HTML entities in CSV text");
-        decodeHtmlCheck.setSelected(true);
-
-        Button browseBtn = new Button("Browse...");
-        browseBtn.setOnAction(e -> onBrowseCsv());
-
-        Button pasteCsvFromClipboardBtn = new Button("Paste CSV from Clipboard");
-        pasteCsvFromClipboardBtn.setOnAction(e -> onPasteCsvFromClipboard());
-
-        showPreviewBtn = new Button("Show Preview");
-        showPreviewBtn.setOnAction(e -> showPreviewFullHeight());
-        showPreviewBtn.setVisible(false);
-        showPreviewBtn.setManaged(false);
-
-        backBtn = new Button("Back to Main View");
-        backBtn.setOnAction(e -> showMainView());
-        backBtn.setVisible(false);
-        backBtn.setManaged(false);
-
-        Button downloadTemplateBtn = new Button("Download CSV Template");
-        downloadTemplateBtn.setOnAction(e -> onDownloadTemplate());
-
-        Button copyTemplateBtn = new Button("Copy Template to Clipboard");
-        copyTemplateBtn.setOnAction(e -> onCopyTemplate());
-
-        Button downloadRubricBtn = new Button("Download Rubric as CSV");
-        downloadRubricBtn.setOnAction(e -> onDownloadRubricCsv());
-
-        Button copyRubricBtn = new Button("Copy Rubric as CSV");
-        copyRubricBtn.setOnAction(e -> onCopyRubricCsv());
-
-        HBox canvasRubricButtons = new HBox(5, downloadRubricBtn, copyRubricBtn);
-
-        Button createBtn = new Button("Create Rubric");
-        createBtn.setOnAction(e -> onCreate());
-
-        Button quitBtn = new Button("Quit");
-        quitBtn.setOnAction(e -> Platform.exit());
-
-        int row = 0;
-
-        grid.add(new Label("Selected Course ID:"), 0, row);
-        grid.add(courseIdField, 1, row++);
-
-        grid.add(new Label("Selected Assignment ID:"), 0, row);
-        grid.add(assignmentIdField, 1, row++);
-
-        grid.add(new Label("Rubric Title:"), 0, row);
-        grid.add(titleField, 1, row++, 2, 1);
-
-        grid.add(new Label("CSV File:"), 0, row);
-        grid.add(csvPathField, 1, row);
-
-        HBox csvButtons = new HBox(5, browseBtn, pasteCsvFromClipboardBtn, showPreviewBtn, backBtn);
-        grid.add(csvButtons, 2, row++);
-
-        csvPathField.textProperty().addListener((obs, oldVal, newVal) -> {
-            boolean hasCsv = newVal != null
-                    && !newVal.trim().isEmpty()
-                    && newVal.trim().toLowerCase().endsWith(".csv");
-            showPreviewBtn.setVisible(hasCsv);
-            showPreviewBtn.setManaged(hasCsv);
-        });
-
-        HBox templateButtons = new HBox(5, downloadTemplateBtn, copyTemplateBtn);
-        grid.add(templateButtons, 2, row++);
-
-        grid.add(canvasRubricButtons, 2, row++);
-
-        VBox rubricOptions = new VBox(
-                5,
-                new HBox(10, freeFormCommentsCheck, useForGradingCheck, hideScoreTotalCheck),
-                new HBox(10, syncPointsCheck, decodeHtmlCheck));
-        grid.add(rubricOptions, 0, row, 6, 3);
-        GridPane.setMargin(rubricOptions, new Insets(5));
-        row += 3;
-
-        grid.add(statusLabel.getRoot(), 0, row++, 3, 1);
-
-        HBox buttons = new HBox(10, createBtn, quitBtn);
-        buttons.getStyleClass().add("bottom-actions");
-        grid.add(buttons, 0, row, 3, 1);
-
-        return grid;
-    }
-
     private VBox wrapInCard(String title, Node content) {
         VBox box = new VBox(6);
         box.getStyleClass().add("section-card");
@@ -263,207 +138,6 @@ public class MainController {
         assignmentIdField.setText(id);
         String name = assignment.name();
         titleField.setText("Rubric for " + name);
-    }
-
-    private void onBrowseCsv() {
-        FileChooser chooser = new FileChooser();
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV files", "*.csv"));
-        File file = chooser.showOpenDialog(stageManager.getPrimaryStage());
-        if (file != null) {
-            csvPathField.setText(file.getAbsolutePath());
-        }
-    }
-
-    private void showPreviewFullHeight() {
-        String path = csvPathField.getText().trim();
-        if (path.isEmpty()) {
-            PopUp.showError("Error", "Please select a CSV file first.");
-            return;
-        }
-        loadRubricPreview(Path.of(path));
-    }
-
-    private void showMainView() {
-        root.setCenter(mainCenterPane);
-        if (showPreviewBtn != null) {
-            showPreviewBtn.setVisible(true);
-            showPreviewBtn.setManaged(true);
-        }
-        if (backBtn != null) {
-            backBtn.setVisible(false);
-            backBtn.setManaged(false);
-        }
-    }
-
-    private TableView<RubricRow> buildRubricPreviewTable(int maxRatings) {
-
-        TableView<RubricRow> table = new TableView<>();
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        table.getStyleClass().add("rubric-preview-table");
-
-        TableColumn<RubricRow, String> critCol = new TableColumn<>("Criterion");
-        critCol.setCellValueFactory(
-                cell -> new ReadOnlyStringWrapper(cell.getValue().getCriterion()));
-        enableWrappingCellFactory(critCol);
-
-        TableColumn<RubricRow, String> pointsCol = new TableColumn<>("Points");
-        pointsCol.setCellValueFactory(
-                cell -> new ReadOnlyStringWrapper(cell.getValue().getPoints()));
-        enableWrappingCellFactory(pointsCol);
-
-        java.util.List<TableColumn<RubricRow, RubricModels.Rating>> ratingCols = new java.util.ArrayList<>();
-        for (int i = 0; i < maxRatings; i++) {
-            final int idx = i;
-
-            TableColumn<RubricRow, RubricModels.Rating> ratingCol = new TableColumn<>("");
-            ratingCol.setCellValueFactory(cell -> {
-                java.util.List<RubricModels.Rating> ratings = cell.getValue().getRatings();
-                if (idx >= ratings.size()) {
-                    return new javafx.beans.property.ReadOnlyObjectWrapper<>(null);
-                }
-                return new javafx.beans.property.ReadOnlyObjectWrapper<>(ratings.get(idx));
-            });
-
-            ratingCol.setCellFactory(col -> new TableCell<>() {
-                private final Text text = new Text();
-
-                {
-                    text.wrappingWidthProperty().bind(col.widthProperty().subtract(10));
-                    setGraphic(text);
-                    setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-                }
-
-                @Override
-                protected void updateItem(RubricModels.Rating item, boolean empty) {
-                    super.updateItem(item, empty);
-                    if (empty || item == null) {
-                        text.setText("");
-                    } else {
-                        String title = item.description() == null ? "" : item.description();
-                        String pts = Double.toString(item.points());
-                        String headerText = title.isEmpty() ? pts : (title + " (" + pts + ")");
-                        String desc = item.longDescription() == null ? "" : item.longDescription();
-
-                        if (desc.isEmpty()) {
-                            text.setText(headerText);
-                        } else {
-                            text.setText(headerText + "\n\n" + desc);
-                        }
-                    }
-                }
-            });
-
-            ratingCols.add(ratingCol);
-        }
-
-        TableColumn<RubricRow, RubricModels.Rating> ratingsParentCol = new TableColumn<>("Ratings");
-        ratingsParentCol.getColumns().addAll(ratingCols);
-
-        table.getColumns().addAll(critCol, ratingsParentCol, pointsCol);
-        return table;
-    }
-
-    private void enableWrappingCellFactory(TableColumn<RubricRow, String> column) {
-        column.setCellFactory(col -> new TableCell<>() {
-            private final Text text = new Text();
-
-            {
-                text.wrappingWidthProperty().bind(col.widthProperty().subtract(10));
-                setGraphic(text);
-                setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-            }
-
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    text.setText("");
-                } else {
-                    text.setText(item);
-                }
-            }
-        });
-    }
-
-    private Pane buildFullHeightPreviewPane() {
-
-        BorderPane pane = new BorderPane();
-
-        pane.setCenter(wrapInCard("Rubric Preview", rubricPreviewTable));
-
-        return pane;
-    }
-
-    private void loadRubricPreview(Path csvPath) {
-
-        this.statusNotifier.setStatus("Loading preview...");
-        new Thread(
-                        () -> {
-                            try {
-                                CsvRubricParser parser = new CsvRubricParser(decodeHtmlCheck.isSelected());
-
-                                CsvRubricParser.ParsedRubric parsed = parser.parse(csvPath);
-
-                                List<RubricModels.Criterion> criteria = parsed.criteria();
-
-                                List<RubricRow> rows = new ArrayList<>();
-                                int maxRatings = 0;
-                                double totalPoints = 0;
-                                for (RubricModels.Criterion c : criteria) {
-                                    List<RubricModels.Rating> ratings = c.ratings();
-                                    maxRatings = Math.max(maxRatings, ratings.size());
-
-                                    double maxPoints = ratings.stream()
-                                            .mapToDouble(RubricModels.Rating::points)
-                                            .max()
-                                            .orElse(0.0);
-
-                                    totalPoints += maxPoints;
-                                    rows.add(new RubricRow(
-                                            c.name(), c.description(), Double.toString(maxPoints), ratings));
-                                }
-
-                                final int finalMaxRatings = maxRatings;
-                                final double finalTotalPoints = totalPoints;
-
-                                Platform.runLater(() -> {
-                                    if (showPreviewBtn != null) {
-                                        showPreviewBtn.setVisible(false);
-                                        showPreviewBtn.setManaged(false);
-                                    }
-                                    if (backBtn != null) {
-                                        backBtn.setVisible(true);
-                                        backBtn.setManaged(true);
-                                    }
-                                    rubricPreviewTable = buildRubricPreviewTable(finalMaxRatings);
-                                    rubricPreviewTable.getItems().setAll(rows);
-
-                                    RubricRow totalRow = new RubricRow(
-                                            "Total",
-                                            "",
-                                            Double.toString(finalTotalPoints),
-                                            java.util.Collections.emptyList());
-                                    rubricPreviewTable.getItems().add(totalRow);
-
-                                    Pane previewPane = buildFullHeightPreviewPane();
-                                    root.setCenter(previewPane);
-
-                                    BorderPane.setMargin(previewPane, new Insets(5, 0, 5, 0));
-                                    this.statusNotifier.setStatus("Preview loaded");
-                                });
-
-                            } catch (Exception ex) {
-                                Platform.runLater(() -> {
-                                    if (rubricPreviewTable != null) {
-                                        rubricPreviewTable.getItems().clear();
-                                    }
-                                    PopUp.showError("Error", "Could not load preview: " + ex.getMessage());
-                                    this.statusNotifier.setStatus("Preview error");
-                                });
-                            }
-                        },
-                        "rubric-preview")
-                .start();
     }
 
     private void onDownloadTemplate() {

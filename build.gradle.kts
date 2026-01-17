@@ -113,7 +113,7 @@ spotless {
 
 javafx {
 
-    version = "21"
+    version = "25"
     modules = listOf("javafx.controls", "javafx.graphics", "javafx.base")
 }
 
@@ -129,7 +129,7 @@ dependencies {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
+        languageVersion.set(JavaLanguageVersion.of(25))
     }
 }
 
@@ -161,6 +161,7 @@ tasks.jar {
 }
 
 val installerOptionsInit = mutableListOf<String>()
+val imageOptionsInit = mutableListOf<String>()
 
 jlink {
     options =
@@ -189,12 +190,14 @@ jlink {
                 appMeta.description,
                 "--copyright",
                 "Copyright 2026 eslam-allam",
+                "--resource-dir",
+                "icons/installer",
             ),
         )
         if (Os.isFamily(Os.FAMILY_WINDOWS)) {
             project.logger.lifecycle("Using windows icon")
             icon = "icons/canvas_rubric_importer.ico"
-            installerOptionsInit.addAll(
+            imageOptionsInit.addAll(
                 listOf(
                     "--win-per-user-install",
                     "--win-shortcut", // Create a Desktop shortcut
@@ -209,7 +212,7 @@ jlink {
             icon = "icons/png/canvas_rubric_importer 128x128.png"
             installerOptionsInit.addAll(
                 listOf(
-                    "--linux-shortcut", // Creates a .desktop file
+                    "--linux-shortcut",
                     "--linux-menu-group",
                     "Canvas Tools", // (Optional) Menu category
                     "--linux-deb-maintainer",
@@ -218,5 +221,6 @@ jlink {
             )
         }
         installerOptions = installerOptionsInit
+        imageOptions = imageOptionsInit
     }
 }

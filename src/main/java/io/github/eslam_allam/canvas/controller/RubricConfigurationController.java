@@ -6,6 +6,7 @@ import io.github.eslam_allam.canvas.model.canvas.Assignment;
 import io.github.eslam_allam.canvas.model.canvas.Course;
 import io.github.eslam_allam.canvas.model.canvas.RubricModels;
 import io.github.eslam_allam.canvas.navigation.RestorableSceneSwitcher;
+import io.github.eslam_allam.canvas.navigation.StageManager;
 import io.github.eslam_allam.canvas.notification.PopUp;
 import io.github.eslam_allam.canvas.notification.StatusNotifier;
 import io.github.eslam_allam.canvas.rubric.importing.csv.CsvRubricParser;
@@ -16,6 +17,8 @@ import io.github.eslam_allam.canvas.view.component.RubricConfiguration;
 import io.github.eslam_allam.canvas.view.section.Section;
 import io.github.eslam_allam.canvas.viewmodel.ListPaneVM;
 import io.github.eslam_allam.canvas.viewmodel.RubricConfigurationVM;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -39,8 +42,8 @@ import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
-import javafx.stage.Window;
 
+@Singleton
 public final class RubricConfigurationController {
 
     private final CanvasRubricService rubricService;
@@ -52,22 +55,23 @@ public final class RubricConfigurationController {
     private final ListPaneVM<Assignment> assignmentPaneVM;
 
     private final RestorableSceneSwitcher sceneSwitcher;
-    private final Window ownerWindow;
+    private final StageManager stageManager;
 
     private final StatusNotifier statusNotifier;
 
     private TableView<RubricRow> rubricPreviewTable;
 
+    @Inject
     public RubricConfigurationController(
             RubricConfiguration view,
             RubricConfigurationVM vm,
-            Window ownerWindow,
+            StageManager stageManager,
             RestorableSceneSwitcher sceneSwitcher,
             StatusNotifier statusNotifier,
             CanvasRubricService rubricService,
             ListPaneVM<Course> coursePaneVM,
             ListPaneVM<Assignment> assignmentPaneVM) {
-        this.ownerWindow = ownerWindow;
+        this.stageManager = stageManager;
         this.sceneSwitcher = sceneSwitcher;
         this.view = view;
         this.vm = vm;
@@ -87,7 +91,7 @@ public final class RubricConfigurationController {
     private void onBrowseCsv(ActionEvent e) {
         FileChooser chooser = new FileChooser();
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV files", "*.csv"));
-        File file = chooser.showOpenDialog(this.ownerWindow);
+        File file = chooser.showOpenDialog(this.stageManager.getPrimaryStage());
         if (file != null) {
             this.vm.csvPath().set(file.getAbsolutePath());
         }
@@ -353,7 +357,7 @@ public final class RubricConfigurationController {
         FileChooser chooser = new FileChooser();
         chooser.setInitialFileName(safeName + ".csv");
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV files", "*.csv"));
-        File file = chooser.showSaveDialog(this.ownerWindow);
+        File file = chooser.showSaveDialog(this.stageManager.getPrimaryStage());
         if (file == null) {
             return;
         }
@@ -516,7 +520,7 @@ public final class RubricConfigurationController {
         FileChooser chooser = new FileChooser();
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV files", "*.csv"));
         chooser.setInitialFileName("rubric_assignment_" + assignmentId + ".csv");
-        File file = chooser.showSaveDialog(this.ownerWindow);
+        File file = chooser.showSaveDialog(this.stageManager.getPrimaryStage());
         if (file == null) {
             return;
         }

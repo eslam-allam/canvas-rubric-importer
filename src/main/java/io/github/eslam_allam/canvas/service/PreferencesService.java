@@ -1,12 +1,16 @@
 package io.github.eslam_allam.canvas.service;
 
 import io.github.eslam_allam.canvas.client.CanvasCredentialProvider;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.prefs.Preferences;
 
+@Singleton
 public class PreferencesService implements CanvasCredentialProvider, ConnectionStore {
 
     private final Preferences prefs;
 
+    @Inject
     public PreferencesService(Class<?> prefsNodeForClass) {
         this.prefs = Preferences.userNodeForPackage(prefsNodeForClass);
     }

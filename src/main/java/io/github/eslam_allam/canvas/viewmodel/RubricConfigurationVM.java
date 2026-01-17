@@ -1,10 +1,13 @@
 package io.github.eslam_allam.canvas.viewmodel;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
+@Singleton
 public final class RubricConfigurationVM {
 
     private final StringProperty courseId;
@@ -65,11 +68,12 @@ public final class RubricConfigurationVM {
         return backBtnVisible;
     }
 
+    @Inject
     public RubricConfigurationVM() {
         this.courseId = new SimpleStringProperty();
         this.assignmentId = new SimpleStringProperty();
-        this.title = new SimpleStringProperty();
-        this.csvPath = new SimpleStringProperty();
+        this.title = new SimpleStringProperty("");
+        this.csvPath = new SimpleStringProperty("");
 
         this.freeFormComments = new SimpleBooleanProperty();
         this.useForGrading = new SimpleBooleanProperty();

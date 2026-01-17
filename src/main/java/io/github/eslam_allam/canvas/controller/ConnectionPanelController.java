@@ -4,13 +4,17 @@ import io.github.eslam_allam.canvas.notification.PopUp;
 import io.github.eslam_allam.canvas.service.ConnectionStore;
 import io.github.eslam_allam.canvas.view.component.ConnectionPanel;
 import io.github.eslam_allam.canvas.viewmodel.ConnectionPanelVM;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import javafx.event.ActionEvent;
 
+@Singleton
 public class ConnectionPanelController {
 
     private final ConnectionPanelVM vm;
     private final ConnectionStore store;
 
+    @Inject
     public ConnectionPanelController(ConnectionPanel view, ConnectionPanelVM vm, ConnectionStore store) {
         this.vm = vm;
         this.store = store;

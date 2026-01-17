@@ -119,6 +119,9 @@ dependencies {
     implementation("org.apache.commons:commons-csv:1.11.0")
     implementation("org.apache.commons:commons-text:1.12.0")
     implementation("org.apache.httpcomponents.client5:httpclient5:5.6")
+    implementation("jakarta.inject:jakarta.inject-api:2.0.1")
+    implementation("com.google.dagger:dagger:2.57.2")
+    annotationProcessor("com.google.dagger:dagger-compiler:2.57.2")
 }
 
 java {

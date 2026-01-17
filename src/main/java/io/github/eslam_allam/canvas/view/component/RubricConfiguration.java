@@ -2,6 +2,8 @@ package io.github.eslam_allam.canvas.view.component;
 
 import io.github.eslam_allam.canvas.view.Widget;
 import io.github.eslam_allam.canvas.viewmodel.RubricConfigurationVM;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.function.Consumer;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -16,6 +18,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
+@Singleton
 public final class RubricConfiguration implements Widget<RubricConfigurationVM> {
 
     private final GridPane root;
@@ -44,6 +47,7 @@ public final class RubricConfiguration implements Widget<RubricConfigurationVM> 
     private final Button createBtn;
     private final Button quitBtn;
 
+    @Inject
     public RubricConfiguration(StatusLabel statusLabel) {
         this.statusLabel = statusLabel;
 

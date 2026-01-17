@@ -9,6 +9,7 @@ import io.github.eslam_allam.canvas.model.canvas.Course;
 import io.github.eslam_allam.canvas.model.canvas.RubricModels;
 import io.github.eslam_allam.canvas.request.AssignmentPointsUpdateRequest;
 import io.github.eslam_allam.canvas.request.RequestWrapper;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -50,6 +51,7 @@ public final class CanvasClient {
     private final CloseableHttpClient httpClient;
     private final ObjectMapper objectMapper;
 
+    @Inject
     public CanvasClient(CanvasCredentialProvider provider) {
         this.baseApi = DynamicURIBuilder.of(provider::loadBaseUrl).appendPath("/api/v1");
         this.httpClient = HttpClientBuilder.create()

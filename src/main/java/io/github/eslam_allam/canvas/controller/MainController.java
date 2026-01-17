@@ -6,9 +6,12 @@ import io.github.eslam_allam.canvas.view.component.ConnectionPanel;
 import io.github.eslam_allam.canvas.view.component.RubricConfiguration;
 import io.github.eslam_allam.canvas.view.section.CoursesAndAssignmentsSection;
 import io.github.eslam_allam.canvas.view.section.Section;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.util.Objects;
 import javafx.scene.Scene;
 
+@Singleton
 public class MainController {
     private final CoursesAndAssignmentsSection coursesAndAssignmentsSection;
 
@@ -18,6 +21,7 @@ public class MainController {
     private final ConnectionPanel connectionPanel;
     private final RubricConfiguration rubricConfiguration;
 
+    @Inject
     public MainController(
             StageManager stageManager,
             MainView view,

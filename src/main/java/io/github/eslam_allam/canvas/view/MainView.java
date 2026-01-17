@@ -1,16 +1,20 @@
 package io.github.eslam_allam.canvas.view;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 
+@Singleton
 public final class MainView implements View {
 
     private final BorderPane root;
     private final VBox top;
     private final VBox bottom;
 
+    @Inject
     public MainView() {
         this.root = new BorderPane();
         this.root.getStyleClass().add("app-root");

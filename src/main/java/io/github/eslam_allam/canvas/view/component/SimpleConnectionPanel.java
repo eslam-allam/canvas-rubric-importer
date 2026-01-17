@@ -1,6 +1,8 @@
 package io.github.eslam_allam.canvas.view.component;
 
 import io.github.eslam_allam.canvas.viewmodel.ConnectionPanelVM;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
@@ -10,6 +12,7 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 
+@Singleton
 public class SimpleConnectionPanel implements ConnectionPanel {
 
     private final GridPane root;
@@ -22,6 +25,7 @@ public class SimpleConnectionPanel implements ConnectionPanel {
 
     private final Button saveButton;
 
+    @Inject
     public SimpleConnectionPanel() {
         this.root = new GridPane();
         root.setHgap(10);

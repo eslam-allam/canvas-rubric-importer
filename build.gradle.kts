@@ -197,7 +197,7 @@ jlink {
         if (Os.isFamily(Os.FAMILY_WINDOWS)) {
             project.logger.lifecycle("Using windows icon")
             icon = "icons/canvas_rubric_importer.ico"
-            imageOptionsInit.addAll(
+            installerOptionsInit.addAll(
                 listOf(
                     "--win-per-user-install",
                     "--win-shortcut", // Create a Desktop shortcut

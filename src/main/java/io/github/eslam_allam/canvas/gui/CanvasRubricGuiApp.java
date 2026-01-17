@@ -1,9 +1,5 @@
 package io.github.eslam_allam.canvas.gui;
 
-import io.github.eslam_allam.canvas.client.CanvasClient;
-import io.github.eslam_allam.canvas.controller.MainController;
-import io.github.eslam_allam.canvas.navigation.StageManager;
-import io.github.eslam_allam.canvas.service.CanvasRubricService;
 import io.github.eslam_allam.canvas.service.PreferencesService;
 import java.net.URISyntaxException;
 import javafx.application.Application;
@@ -13,14 +9,11 @@ public class CanvasRubricGuiApp extends Application {
 
     @Override
     public void start(Stage primaryStage) throws URISyntaxException {
-        StageManager stageManager = new StageManager(primaryStage);
-        PreferencesService preferencesService = new PreferencesService(CanvasRubricGuiApp.class);
 
-        CanvasClient client = new CanvasClient(preferencesService);
-        CanvasRubricService rubricService = new CanvasRubricService(client);
+        CanvasRubricImporter canvasRubricImporter = DaggerCanvasRubricImporter.factory()
+                .create(primaryStage, new PreferencesService(CanvasRubricGuiApp.class));
 
-        MainController controller = new MainController(preferencesService, rubricService, stageManager, client);
-        controller.initAndShow();
+        canvasRubricImporter.init();
     }
 
     public static void main(String[] args) {

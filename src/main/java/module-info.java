@@ -9,6 +9,15 @@ module io.github.eslam_allam.canvas {
     exports io.github.eslam_allam.canvas.domain;
     exports io.github.eslam_allam.canvas.model.canvas;
     exports io.github.eslam_allam.canvas.request;
+    exports io.github.eslam_allam.canvas.factory;
+    exports io.github.eslam_allam.canvas.controller;
+    exports io.github.eslam_allam.canvas.navigation;
+    exports io.github.eslam_allam.canvas.view;
+    exports io.github.eslam_allam.canvas.view.section;
+    exports io.github.eslam_allam.canvas.viewmodel;
+    exports io.github.eslam_allam.canvas.service;
+    exports io.github.eslam_allam.canvas.notification;
+    exports io.github.eslam_allam.canvas.view.component;
 
     // JavaFX modules
     requires javafx.base;
@@ -22,12 +31,11 @@ module io.github.eslam_allam.canvas {
     requires transitive org.apache.httpcomponents.core5.httpcore5;
     requires org.apache.httpcomponents.client5.httpclient5;
     requires org.apache.commons.lang3;
+    requires dagger;
+    requires jakarta.inject;
 
     // JDK modules
     requires java.net.http;
     requires java.prefs;
     requires com.fasterxml.jackson.annotation;
-
-    // Allow JavaFX / reflection to access GUI internals
-    opens io.github.eslam_allam.canvas.gui;
 }

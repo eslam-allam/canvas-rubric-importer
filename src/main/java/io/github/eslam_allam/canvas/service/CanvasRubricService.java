@@ -6,6 +6,8 @@ import io.github.eslam_allam.canvas.domain.ResultStatus;
 import io.github.eslam_allam.canvas.model.canvas.Assignment;
 import io.github.eslam_allam.canvas.model.canvas.RubricModels;
 import io.github.eslam_allam.canvas.rubric.importing.csv.CsvRubricParser;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -17,9 +19,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+@Singleton
 public class CanvasRubricService {
     private final CanvasClient canvasClient;
 
+    @Inject
     public CanvasRubricService(CanvasClient canvasClient) {
         this.canvasClient = canvasClient;
     }
@@ -96,8 +100,7 @@ public class CanvasRubricService {
     }
 
     public CsvRubricParser.ParsedRubric parseRubricCsv(Path csvPath, boolean decodeHtml) throws IOException {
-        CsvRubricParser parser = new CsvRubricParser(decodeHtml);
-        return parser.parse(csvPath);
+        return CsvRubricParser.parse(csvPath, decodeHtml);
     }
 
     public void updateAssignmentPoints(String courseId, String assignmentId, double totalPoints)

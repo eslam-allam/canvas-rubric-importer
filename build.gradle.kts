@@ -76,9 +76,12 @@ val generateAppInfo by tasks.registering {
     }
 }
 
-sourceSets["main"].java.srcDir(
-    generatedSrcDir,
-)
+val daggerGeneratedSrcDir = layout.buildDirectory.dir("generated/sources/annotationProcessor/java/main")
+
+sourceSets["main"].java {
+    srcDir(generatedSrcDir)
+    srcDir(daggerGeneratedSrcDir)
+}
 
 tasks.named("compileJava") {
     dependsOn(generateAppInfo)
@@ -110,7 +113,7 @@ spotless {
 
 javafx {
 
-    version = "21"
+    version = "25"
     modules = listOf("javafx.controls", "javafx.graphics", "javafx.base")
 }
 
@@ -119,11 +122,14 @@ dependencies {
     implementation("org.apache.commons:commons-csv:1.11.0")
     implementation("org.apache.commons:commons-text:1.12.0")
     implementation("org.apache.httpcomponents.client5:httpclient5:5.6")
+    implementation("jakarta.inject:jakarta.inject-api:2.0.1")
+    implementation("com.google.dagger:dagger:2.57.2")
+    annotationProcessor("com.google.dagger:dagger-compiler:2.57.2")
 }
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
+        languageVersion.set(JavaLanguageVersion.of(25))
     }
 }
 
@@ -155,6 +161,7 @@ tasks.jar {
 }
 
 val installerOptionsInit = mutableListOf<String>()
+val imageOptionsInit = mutableListOf<String>()
 
 jlink {
     options =
@@ -183,6 +190,8 @@ jlink {
                 appMeta.description,
                 "--copyright",
                 "Copyright 2026 eslam-allam",
+                "--resource-dir",
+                "icons/installer",
             ),
         )
         if (Os.isFamily(Os.FAMILY_WINDOWS)) {
@@ -203,7 +212,7 @@ jlink {
             icon = "icons/png/canvas_rubric_importer 128x128.png"
             installerOptionsInit.addAll(
                 listOf(
-                    "--linux-shortcut", // Creates a .desktop file
+                    "--linux-shortcut",
                     "--linux-menu-group",
                     "Canvas Tools", // (Optional) Menu category
                     "--linux-deb-maintainer",
@@ -212,5 +221,6 @@ jlink {
             )
         }
         installerOptions = installerOptionsInit
+        imageOptions = imageOptionsInit
     }
 }

@@ -76,9 +76,12 @@ val generateAppInfo by tasks.registering {
     }
 }
 
-sourceSets["main"].java.srcDir(
-    generatedSrcDir,
-)
+val daggerGeneratedSrcDir = layout.buildDirectory.dir("generated/sources/annotationProcessor/java/main")
+
+sourceSets["main"].java {
+    srcDir(generatedSrcDir)
+    srcDir(daggerGeneratedSrcDir)
+}
 
 tasks.named("compileJava") {
     dependsOn(generateAppInfo)

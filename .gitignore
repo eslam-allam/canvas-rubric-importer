@@ -55,3 +55,5 @@ gradle-app.setting
 
 bin/
 kls_database.db
+.factorypath
+.settings

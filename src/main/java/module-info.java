@@ -18,10 +18,11 @@ module io.github.eslam_allam.canvas {
     exports io.github.eslam_allam.canvas.service;
     exports io.github.eslam_allam.canvas.notification;
     exports io.github.eslam_allam.canvas.view.component;
+    exports io.github.eslam_allam.canvas.constant;
 
     // JavaFX modules
     requires javafx.base;
-    requires javafx.controls;
+    requires transitive javafx.controls;
     requires transitive javafx.graphics;
 
     // Third-party libraries

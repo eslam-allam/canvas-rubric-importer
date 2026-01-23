@@ -1,5 +1,8 @@
 package io.github.eslam_allam.canvas.controller;
 
+import io.github.eslam_allam.canvas.constant.FileType;
+import io.github.eslam_allam.canvas.constant.OperationStatus;
+import io.github.eslam_allam.canvas.constant.StandardAlert;
 import io.github.eslam_allam.canvas.domain.ResultStatus;
 import io.github.eslam_allam.canvas.domain.RubricRow;
 import io.github.eslam_allam.canvas.model.canvas.Assignment;
@@ -90,7 +93,8 @@ public final class RubricConfigurationController {
 
     private void onBrowseCsv(ActionEvent e) {
         FileChooser chooser = new FileChooser();
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV files", "*.csv"));
+        chooser.getExtensionFilters()
+                .add(new FileChooser.ExtensionFilter(FileType.CSV.getDescription(), FileType.CSV.getGlobs()));
         File file = chooser.showOpenDialog(this.stageManager.getPrimaryStage());
         if (file != null) {
             this.vm.csvPath().set(file.getAbsolutePath());
@@ -106,7 +110,7 @@ public final class RubricConfigurationController {
     private void showPreviewFullHeight(ActionEvent e) {
         String path = this.vm.csvPath().get().trim();
         if (path.isEmpty()) {
-            PopUp.showError("Error", "Please select a CSV file first.");
+            PopUp.showError("Please select a CSV file first.");
             return;
         }
         loadRubricPreview(Path.of(path));
@@ -256,7 +260,7 @@ public final class RubricConfigurationController {
                                     if (rubricPreviewTable != null) {
                                         rubricPreviewTable.getItems().clear();
                                     }
-                                    PopUp.showError("Error", "Could not load preview: " + ex.getMessage());
+                                    PopUp.showError("Could not load preview: " + ex.getMessage());
                                     this.statusNotifier.setStatus("Preview error");
                                 });
                             }
@@ -268,22 +272,22 @@ public final class RubricConfigurationController {
     private void onCreate(ActionEvent e) {
         String courseId = this.vm.courseId().get().trim();
         if (courseId.isEmpty()) {
-            PopUp.showError("Error", "Please select a course.");
+            PopUp.show(StandardAlert.COURSE_MISSING);
             return;
         }
         String assignmentId = this.vm.assignmentId().get().trim();
         if (assignmentId.isEmpty()) {
-            PopUp.showError("Error", "Please select an assignment.");
+            PopUp.show(StandardAlert.ASSIGNMENT_MISSING);
             return;
         }
         String title = this.vm.title().get().trim();
         if (title.isEmpty()) {
-            PopUp.showError("Error", "Rubric title is required.");
+            PopUp.showError("Rubric title is required.");
             return;
         }
         String csvPath = this.vm.csvPath().get().trim();
         if (csvPath.isEmpty()) {
-            PopUp.showError("Error", "CSV file is required.");
+            PopUp.showError("CSV file is required.");
             return;
         }
 
@@ -323,7 +327,7 @@ public final class RubricConfigurationController {
                                         response.rubricAssociation().id().toString();
 
                                 Platform.runLater(() -> {
-                                    this.statusNotifier.setStatus("Done");
+                                    this.statusNotifier.setStatus(OperationStatus.DONE);
                                     PopUp.showInfo(
                                             "Success",
                                             "Rubric created successfully!\nRubric: "
@@ -333,8 +337,8 @@ public final class RubricConfigurationController {
                                 });
                             } catch (Exception ex) {
                                 Platform.runLater(() -> {
-                                    this.statusNotifier.setStatus("Error");
-                                    PopUp.showError("Error", ex.getMessage());
+                                    this.statusNotifier.setStatus(OperationStatus.ERROR);
+                                    PopUp.showError(ex.getMessage());
                                 });
                             }
                         },
@@ -345,7 +349,7 @@ public final class RubricConfigurationController {
     private void onDownloadTemplate(ActionEvent e) {
         String rubricTitle = this.vm.title().get().trim();
         if (rubricTitle.isEmpty()) {
-            PopUp.showError("Error", "Rubric title is required before downloading a template.");
+            PopUp.showError("Rubric title is required before downloading a template.");
             return;
         }
         String safeName = rubricTitle.replaceAll("[^A-Za-z0-9_.-]+", "_");
@@ -356,7 +360,8 @@ public final class RubricConfigurationController {
 
         FileChooser chooser = new FileChooser();
         chooser.setInitialFileName(safeName + ".csv");
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV files", "*.csv"));
+        chooser.getExtensionFilters()
+                .add(new FileChooser.ExtensionFilter(FileType.CSV.getDescription(), FileType.CSV.getGlobs()));
         File file = chooser.showSaveDialog(this.stageManager.getPrimaryStage());
         if (file == null) {
             return;
@@ -367,14 +372,14 @@ public final class RubricConfigurationController {
             PopUp.showInfo("Template saved", "Saved rubric CSV template to:\n" + file.getAbsolutePath());
         } catch (IOException ex) {
 
-            PopUp.showError("Error", "Could not save template: " + ex.getMessage());
+            PopUp.showError("Could not save template: " + ex.getMessage());
         }
     }
 
     private void onCopyTemplate(ActionEvent e) {
         String rubricTitle = this.vm.title().get().trim();
         if (rubricTitle.isEmpty()) {
-            PopUp.showError("Error", "Rubric title is required before copying a template.");
+            PopUp.showError("Rubric title is required before copying a template.");
             return;
         }
 
@@ -394,14 +399,14 @@ public final class RubricConfigurationController {
     private void onPasteCsvFromClipboard(ActionEvent e) {
         String csvText = Clipboard.getSystemClipboard().getString();
         if (csvText == null || csvText.trim().isEmpty()) {
-            PopUp.showError("Error", "Clipboard does not contain any text.");
+            PopUp.showError("Clipboard does not contain any text.");
             return;
         }
 
         csvText = csvText.replace("\r\n", "\n").replace("\r", "\n");
         String[] lines = csvText.split("\n");
         if (lines.length < 2) {
-            PopUp.showError("Error", "Clipboard CSV must include a header row and at least one data row.");
+            PopUp.showError("Clipboard CSV must include a header row and at least one data row.");
             return;
         }
 
@@ -418,12 +423,12 @@ public final class RubricConfigurationController {
                 headerCells = parser.getHeaderNames();
             }
         } catch (IOException ex) {
-            PopUp.showError("Error", "Failed to parse clipboard CSV header: " + ex.getMessage());
+            PopUp.showError("Failed to parse clipboard CSV header: " + ex.getMessage());
             return;
         }
 
         if (headerCells == null || headerCells.isEmpty()) {
-            PopUp.showError("Error", "Clipboard CSV has an empty header row.");
+            PopUp.showError("Clipboard CSV has an empty header row.");
             return;
         }
 
@@ -432,10 +437,8 @@ public final class RubricConfigurationController {
         java.util.List<RatingGroup> ratingGroups = RatingHeaderDetector.detect(headerArray);
 
         if (ratingGroups.size() < 2) {
-            PopUp.showError(
-                    "Error",
-                    "Clipboard CSV must have at least rating1/rating1_points/rating1_desc and"
-                            + " rating2/rating2_points/rating2_desc columns.");
+            PopUp.showError("Clipboard CSV must have at least rating1/rating1_points/rating1_desc and"
+                    + " rating2/rating2_points/rating2_desc columns.");
             return;
         }
 
@@ -455,7 +458,7 @@ public final class RubricConfigurationController {
             }
         }
         if (!extra.isEmpty()) {
-            PopUp.showError("Error", "Unexpected column(s) in clipboard CSV header: " + String.join(", ", extra));
+            PopUp.showError("Unexpected column(s) in clipboard CSV header: " + String.join(", ", extra));
             return;
         }
 
@@ -467,19 +470,19 @@ public final class RubricConfigurationController {
                     "Clipboard CSV saved",
                     "Saved clipboard rubric CSV to temporary file:\n" + tempFile.toAbsolutePath());
         } catch (IOException ex) {
-            PopUp.showError("Error", "Failed to save clipboard CSV to temporary file: " + ex.getMessage());
+            PopUp.showError("Failed to save clipboard CSV to temporary file: " + ex.getMessage());
         }
     }
 
     private void onCopyRubricCsv(ActionEvent e) {
         String courseId = this.vm.courseId().get().trim();
         if (courseId.isEmpty()) {
-            PopUp.showError("Error", "Please select a course.");
+            PopUp.show(StandardAlert.COURSE_MISSING);
             return;
         }
         String assignmentId = this.vm.assignmentId().get().trim();
         if (assignmentId.isEmpty()) {
-            PopUp.showError("Error", "Please select an assignment.");
+            PopUp.show(StandardAlert.ASSIGNMENT_MISSING);
             return;
         }
 
@@ -487,7 +490,7 @@ public final class RubricConfigurationController {
         rubricService.getCanvasRubricCSV(courseId, assignmentId, result -> {
             if (result.status() == ResultStatus.FAILURE) {
                 Platform.runLater(() -> {
-                    this.statusNotifier.setStatus("Error");
+                    this.statusNotifier.setStatus(OperationStatus.ERROR);
                     PopUp.showError("Failed to fetch rubric", result.data());
                 });
                 return;
@@ -508,17 +511,18 @@ public final class RubricConfigurationController {
     private void onDownloadRubricCsv(ActionEvent e) {
         String courseId = this.vm.courseId().get().trim();
         if (courseId.isEmpty()) {
-            PopUp.showError("Error", "Please select a course.");
+            PopUp.show(StandardAlert.COURSE_MISSING);
             return;
         }
         String assignmentId = this.vm.assignmentId().get().trim();
         if (assignmentId.isEmpty()) {
-            PopUp.showError("Error", "Please select an assignment.");
+            PopUp.show(StandardAlert.ASSIGNMENT_MISSING);
             return;
         }
 
         FileChooser chooser = new FileChooser();
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV files", "*.csv"));
+        chooser.getExtensionFilters()
+                .add(new FileChooser.ExtensionFilter(FileType.CSV.getDescription(), FileType.CSV.getGlobs()));
         chooser.setInitialFileName("rubric_assignment_" + assignmentId + ".csv");
         File file = chooser.showSaveDialog(this.stageManager.getPrimaryStage());
         if (file == null) {
@@ -529,7 +533,7 @@ public final class RubricConfigurationController {
         rubricService.getCanvasRubricCSV(courseId, assignmentId, result -> {
             if (result.status() == ResultStatus.FAILURE) {
                 Platform.runLater(() -> {
-                    this.statusNotifier.setStatus("Error");
+                    this.statusNotifier.setStatus(OperationStatus.ERROR);
                     PopUp.showError("Failed to Download Rubric", result.data());
                 });
             } else {
@@ -537,13 +541,13 @@ public final class RubricConfigurationController {
                     Files.writeString(file.toPath(), result.data(), StandardCharsets.UTF_8);
                 } catch (IOException ex) {
                     Platform.runLater(() -> {
-                        this.statusNotifier.setStatus("Error");
+                        this.statusNotifier.setStatus(OperationStatus.ERROR);
                         PopUp.showError("Failed to Save Rubric", ex.getMessage());
                     });
                     return;
                 }
                 Platform.runLater(() -> {
-                    this.statusNotifier.setStatus("Done");
+                    this.statusNotifier.setStatus(OperationStatus.DONE);
                     PopUp.showInfo("Rubric Downloaded", "Saved rubric CSV to:\n" + file.getAbsolutePath());
                 });
             }

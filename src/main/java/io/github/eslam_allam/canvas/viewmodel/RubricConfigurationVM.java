@@ -70,8 +70,8 @@ public final class RubricConfigurationVM {
 
     @Inject
     public RubricConfigurationVM() {
-        this.courseId = new SimpleStringProperty();
-        this.assignmentId = new SimpleStringProperty();
+        this.courseId = new SimpleStringProperty("");
+        this.assignmentId = new SimpleStringProperty("");
         this.title = new SimpleStringProperty("");
         this.csvPath = new SimpleStringProperty("");
 

@@ -1,7 +1,7 @@
 /* filepath: src/main/resources/style.css */
 
 .root {
-    -fx-font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    -fx-font-family: "Inter 28pt", "Segoe UI", system-ui, sans-serif;
     -fx-background-color: #f3f4f6;
     -fx-text-fill: #111827;
 }
@@ -184,3 +184,6 @@
     -fx-background-color: #e5e7eb;
 }
 
+.rubric-rating-header {
+    -fx-font-weight: bold;
+}

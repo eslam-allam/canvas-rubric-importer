@@ -17,6 +17,8 @@ import io.github.eslam_allam.canvas.rubric.importing.csv.RatingHeaderDetector;
 import io.github.eslam_allam.canvas.rubric.importing.csv.RatingHeaderDetector.RatingGroup;
 import io.github.eslam_allam.canvas.service.CanvasRubricService;
 import io.github.eslam_allam.canvas.view.component.RubricConfiguration;
+import io.github.eslam_allam.canvas.view.component.RubricRatingWrappingTableCell;
+import io.github.eslam_allam.canvas.view.component.WrappingTableCell;
 import io.github.eslam_allam.canvas.view.section.Section;
 import io.github.eslam_allam.canvas.viewmodel.ListPaneVM;
 import io.github.eslam_allam.canvas.viewmodel.RubricConfigurationVM;
@@ -117,31 +119,16 @@ public final class RubricConfigurationController {
     }
 
     private void enableWrappingCellFactory(TableColumn<RubricRow, String> column) {
-        column.setCellFactory(col -> new TableCell<>() {
-            private final Text text = new Text();
+        column.setCellFactory(col -> new WrappingTableCell());
+    }
 
-            {
-                text.wrappingWidthProperty().bind(col.widthProperty().subtract(10));
-                setGraphic(text);
-                setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-            }
-
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    text.setText("");
-                } else {
-                    text.setText(item);
-                }
-            }
-        });
+    private void enableRubricRatingCellFactory(TableColumn<RubricRow, RubricModels.Rating> ratingCol) {
+        ratingCol.setCellFactory(col -> new RubricRatingWrappingTableCell());
     }
 
     private TableView<RubricRow> buildRubricPreviewTable(int maxRatings) {
-
         TableView<RubricRow> table = new TableView<>();
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         table.getStyleClass().add("rubric-preview-table");
 
         TableColumn<RubricRow, String> critCol = new TableColumn<>("Criterion");
@@ -167,42 +154,14 @@ public final class RubricConfigurationController {
                 return new javafx.beans.property.ReadOnlyObjectWrapper<>(ratings.get(idx));
             });
 
-            ratingCol.setCellFactory(col -> new TableCell<>() {
-                private final Text text = new Text();
-
-                {
-                    text.wrappingWidthProperty().bind(col.widthProperty().subtract(10));
-                    setGraphic(text);
-                    setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-                }
-
-                @Override
-                protected void updateItem(RubricModels.Rating item, boolean empty) {
-                    super.updateItem(item, empty);
-                    if (empty || item == null) {
-                        text.setText("");
-                    } else {
-                        String title = item.description() == null ? "" : item.description();
-                        String pts = Double.toString(item.points());
-                        String headerText = title.isEmpty() ? pts : (title + " (" + pts + ")");
-                        String desc = item.longDescription() == null ? "" : item.longDescription();
-
-                        if (desc.isEmpty()) {
-                            text.setText(headerText);
-                        } else {
-                            text.setText(headerText + "\n\n" + desc);
-                        }
-                    }
-                }
-            });
-
+            enableRubricRatingCellFactory(ratingCol);
             ratingCols.add(ratingCol);
         }
 
         TableColumn<RubricRow, RubricModels.Rating> ratingsParentCol = new TableColumn<>("Ratings");
         ratingsParentCol.getColumns().addAll(ratingCols);
 
-        table.getColumns().addAll(critCol, ratingsParentCol, pointsCol);
+        table.getColumns().addAll(List.of(critCol, ratingsParentCol, pointsCol));
         return table;
     }
 
@@ -210,62 +169,62 @@ public final class RubricConfigurationController {
 
         this.statusNotifier.setStatus("Loading preview...");
         new Thread(
-                        () -> {
-                            try {
-                                CsvRubricParser.ParsedRubric parsed = CsvRubricParser.parse(
-                                        csvPath, this.vm.decodeHtml().get());
+                () -> {
+                    try {
+                        CsvRubricParser.ParsedRubric parsed = CsvRubricParser.parse(
+                                csvPath, this.vm.decodeHtml().get());
 
-                                List<RubricModels.Criterion> criteria = parsed.criteria();
+                        List<RubricModels.Criterion> criteria = parsed.criteria();
 
-                                List<RubricRow> rows = new ArrayList<>();
-                                int maxRatings = 0;
-                                double totalPoints = 0;
-                                for (RubricModels.Criterion c : criteria) {
-                                    List<RubricModels.Rating> ratings = c.ratings();
-                                    maxRatings = Math.max(maxRatings, ratings.size());
+                        List<RubricRow> rows = new ArrayList<>();
+                        int maxRatings = 0;
+                        double totalPoints = 0;
+                        for (RubricModels.Criterion c : criteria) {
+                            List<RubricModels.Rating> ratings = c.ratings();
+                            maxRatings = Math.max(maxRatings, ratings.size());
 
-                                    double maxPoints = ratings.stream()
-                                            .mapToDouble(RubricModels.Rating::points)
-                                            .max()
-                                            .orElse(0.0);
+                            double maxPoints = ratings.stream()
+                                    .mapToDouble(RubricModels.Rating::points)
+                                    .max()
+                                    .orElse(0.0);
 
-                                    totalPoints += maxPoints;
-                                    rows.add(new RubricRow(
-                                            c.name(), c.description(), Double.toString(maxPoints), ratings));
-                                }
+                            totalPoints += maxPoints;
+                            rows.add(new RubricRow(
+                                    c.name(), c.description(), Double.toString(maxPoints), ratings));
+                        }
 
-                                final int finalMaxRatings = maxRatings;
-                                final double finalTotalPoints = totalPoints;
+                        final int finalMaxRatings = maxRatings;
+                        final double finalTotalPoints = totalPoints;
 
-                                Platform.runLater(() -> {
-                                    this.vm.previewButtonVisible().set(false);
-                                    this.vm.backBtnVisible().set(true);
-                                    rubricPreviewTable = buildRubricPreviewTable(finalMaxRatings);
-                                    rubricPreviewTable.getItems().setAll(rows);
+                        Platform.runLater(() -> {
+                            this.vm.previewButtonVisible().set(false);
+                            this.vm.backBtnVisible().set(true);
+                            rubricPreviewTable = buildRubricPreviewTable(finalMaxRatings);
+                            rubricPreviewTable.getItems().setAll(rows);
 
-                                    RubricRow totalRow = new RubricRow(
-                                            "Total",
-                                            "",
-                                            Double.toString(finalTotalPoints),
-                                            java.util.Collections.emptyList());
-                                    rubricPreviewTable.getItems().add(totalRow);
+                            RubricRow totalRow = new RubricRow(
+                                    "Total",
+                                    "",
+                                    Double.toString(finalTotalPoints),
+                                    java.util.Collections.emptyList());
+                            rubricPreviewTable.getItems().add(totalRow);
 
-                                    this.sceneSwitcher.show(Section.oneTimeSection(
-                                            "Rubric Preview", rubricPreviewTable, new Insets(5, 0, 5, 0)));
-                                    this.statusNotifier.setStatus("Preview loaded");
-                                });
+                            this.sceneSwitcher.show(Section.oneTimeSection(
+                                    "Rubric Preview", rubricPreviewTable, new Insets(5, 0, 5, 0)));
+                            this.statusNotifier.setStatus("Preview loaded");
+                        });
 
-                            } catch (Exception ex) {
-                                Platform.runLater(() -> {
-                                    if (rubricPreviewTable != null) {
-                                        rubricPreviewTable.getItems().clear();
-                                    }
-                                    PopUp.showError("Could not load preview: " + ex.getMessage());
-                                    this.statusNotifier.setStatus("Preview error");
-                                });
+                    } catch (Exception ex) {
+                        Platform.runLater(() -> {
+                            if (rubricPreviewTable != null) {
+                                rubricPreviewTable.getItems().clear();
                             }
-                        },
-                        "rubric-preview")
+                            PopUp.showError("Could not load preview: " + ex.getMessage());
+                            this.statusNotifier.setStatus("Preview error");
+                        });
+                    }
+                },
+                "rubric-preview")
                 .start();
     }
 
@@ -298,51 +257,50 @@ public final class RubricConfigurationController {
 
         this.statusNotifier.setStatus("Reading CSV...");
         new Thread(
-                        () -> {
-                            try {
+                () -> {
+                    try {
 
-                                CsvRubricParser.ParsedRubric parsed = CsvRubricParser.parse(
-                                        Path.of(csvPath), this.vm.decodeHtml().get());
-                                List<RubricModels.Criterion> criteria = parsed.criteria();
-                                double total = parsed.totalPoints();
+                        CsvRubricParser.ParsedRubric parsed = CsvRubricParser.parse(
+                                Path.of(csvPath), this.vm.decodeHtml().get());
+                        List<RubricModels.Criterion> criteria = parsed.criteria();
+                        double total = parsed.totalPoints();
 
-                                if (syncPoints) {
-                                    Platform.runLater(
-                                            () -> this.statusNotifier.setStatus("Updating assignment points..."));
-                                    rubricService.updateAssignmentPoints(courseId, assignmentId, total);
-                                }
+                        if (syncPoints) {
+                            Platform.runLater(
+                                    () -> this.statusNotifier.setStatus("Updating assignment points..."));
+                            rubricService.updateAssignmentPoints(courseId, assignmentId, total);
+                        }
 
-                                Platform.runLater(() -> this.statusNotifier.setStatus("Creating rubric..."));
-                                RubricModels.Created response = rubricService.createRubric(
-                                        courseId,
-                                        assignmentId,
-                                        title,
-                                        freeForm,
-                                        useForGrading,
-                                        hideScoreTotal,
-                                        "grading",
-                                        criteria);
-                                String rubricTitle = response.rubric().title();
-                                String assocId =
-                                        response.rubricAssociation().id().toString();
+                        Platform.runLater(() -> this.statusNotifier.setStatus("Creating rubric..."));
+                        RubricModels.Created response = rubricService.createRubric(
+                                courseId,
+                                assignmentId,
+                                title,
+                                freeForm,
+                                useForGrading,
+                                hideScoreTotal,
+                                "grading",
+                                criteria);
+                        String rubricTitle = response.rubric().title();
+                        String assocId = response.rubricAssociation().id().toString();
 
-                                Platform.runLater(() -> {
-                                    this.statusNotifier.setStatus(OperationStatus.DONE);
-                                    PopUp.showInfo(
-                                            "Success",
-                                            "Rubric created successfully!\nRubric: "
-                                                    + rubricTitle
-                                                    + "\nAssociation ID: "
-                                                    + assocId);
-                                });
-                            } catch (Exception ex) {
-                                Platform.runLater(() -> {
-                                    this.statusNotifier.setStatus(OperationStatus.ERROR);
-                                    PopUp.showError(ex.getMessage());
-                                });
-                            }
-                        },
-                        "create-rubric")
+                        Platform.runLater(() -> {
+                            this.statusNotifier.setStatus(OperationStatus.DONE);
+                            PopUp.showInfo(
+                                    "Success",
+                                    "Rubric created successfully!\nRubric: "
+                                            + rubricTitle
+                                            + "\nAssociation ID: "
+                                            + assocId);
+                        });
+                    } catch (Exception ex) {
+                        Platform.runLater(() -> {
+                            this.statusNotifier.setStatus(OperationStatus.ERROR);
+                            PopUp.showError(ex.getMessage());
+                        });
+                    }
+                },
+                "create-rubric")
                 .start();
     }
 
@@ -568,8 +526,8 @@ public final class RubricConfigurationController {
         if (value == null) {
             return "";
         }
-        boolean hasSpecial =
-                value.contains(",") || value.contains("\n") || value.contains("\r") || value.contains("\"");
+        boolean hasSpecial = value.contains(",") || value.contains("\n") || value.contains("\r")
+                || value.contains("\"");
         String escaped = value.replace("\"", "\"\"");
         return hasSpecial ? "\"" + escaped + "\"" : escaped;
     }
@@ -581,7 +539,7 @@ public final class RubricConfigurationController {
         try {
             Path path = Paths.get(newPath);
             this.vm.previewButtonVisible().set(path.getFileName().toString().endsWith(".csv"));
-        } catch (InvalidPathException e) {
+        } catch (InvalidPathException _) {
             this.vm.previewButtonVisible().set(false);
         }
     }

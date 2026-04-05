@@ -170,7 +170,7 @@ public record Assignment(
         // original assignment's id
         @JsonProperty("original_assignment_id") Long originalAssignmentId,
         // original assignment's lti_resource_link_id
-        @JsonProperty("original_lti_resource_link_id") Long originalLtiResourceLinkId,
+        @JsonProperty("original_lti_resource_link_id") String originalLtiResourceLinkId,
         // original assignment's name
         @JsonProperty("original_assignment_name") String originalAssignmentName,
         // original assignment's quiz_id

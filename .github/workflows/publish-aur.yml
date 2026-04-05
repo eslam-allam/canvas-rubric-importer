@@ -3,6 +3,11 @@ name: Publish AUR Package
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release"
+        required: true
 
 jobs:
   update-aur:
@@ -20,7 +25,11 @@ jobs:
         id: version
         run: |
           # Expect tag like v1.0.3
-          TAG="${GITHUB_REF##*/}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+                TAG="${{ inputs.tag }}"
+              else
+                TAG="${GITHUB_REF##*/}"
+          fi
           VERSION="${TAG#v}"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"

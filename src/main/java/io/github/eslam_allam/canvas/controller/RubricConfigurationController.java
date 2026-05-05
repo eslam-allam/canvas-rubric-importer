@@ -4,6 +4,7 @@ import io.github.eslam_allam.canvas.constant.FileType;
 import io.github.eslam_allam.canvas.constant.OperationStatus;
 import io.github.eslam_allam.canvas.constant.StandardAlert;
 import io.github.eslam_allam.canvas.domain.ResultStatus;
+import io.github.eslam_allam.canvas.domain.RubricCriterion;
 import io.github.eslam_allam.canvas.domain.RubricRow;
 import io.github.eslam_allam.canvas.model.canvas.Assignment;
 import io.github.eslam_allam.canvas.model.canvas.Course;
@@ -17,6 +18,7 @@ import io.github.eslam_allam.canvas.rubric.importing.csv.RatingHeaderDetector;
 import io.github.eslam_allam.canvas.rubric.importing.csv.RatingHeaderDetector.RatingGroup;
 import io.github.eslam_allam.canvas.service.CanvasRubricService;
 import io.github.eslam_allam.canvas.view.component.RubricConfiguration;
+import io.github.eslam_allam.canvas.view.component.RubricCriterionWrappingTableCell;
 import io.github.eslam_allam.canvas.view.component.RubricRatingWrappingTableCell;
 import io.github.eslam_allam.canvas.view.component.WrappingTableCell;
 import io.github.eslam_allam.canvas.view.section.Section;
@@ -36,6 +38,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
@@ -119,6 +122,10 @@ public final class RubricConfigurationController {
         column.setCellFactory(col -> new WrappingTableCell());
     }
 
+    private void enableRubricCriterionCellFactory(TableColumn<RubricRow, RubricCriterion> criteriaCol) {
+        criteriaCol.setCellFactory(col -> new RubricCriterionWrappingTableCell());
+    }
+
     private void enableRubricRatingCellFactory(TableColumn<RubricRow, RubricModels.Rating> ratingCol) {
         ratingCol.setCellFactory(col -> new RubricRatingWrappingTableCell());
     }
@@ -128,10 +135,10 @@ public final class RubricConfigurationController {
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         table.getStyleClass().add("rubric-preview-table");
 
-        TableColumn<RubricRow, String> critCol = new TableColumn<>("Criterion");
-        critCol.setCellValueFactory(
-                cell -> new ReadOnlyStringWrapper(cell.getValue().getCriterion()));
-        enableWrappingCellFactory(critCol);
+        TableColumn<RubricRow, RubricCriterion> critCol = new TableColumn<>("Criterion");
+        critCol.setCellValueFactory(cell -> new ReadOnlyObjectWrapper<>(new RubricCriterion(
+                cell.getValue().getCriterion(), cell.getValue().getDescription())));
+        enableRubricCriterionCellFactory(critCol);
 
         TableColumn<RubricRow, String> pointsCol = new TableColumn<>("Points");
         pointsCol.setCellValueFactory(

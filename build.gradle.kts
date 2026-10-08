@@ -135,6 +135,7 @@ java {
 
 application {
     mainModule.set(appMeta.id)
+    mainClass.set(mainClassName)
 }
 
 tasks.register<JavaExec>("runCli") {
@@ -178,7 +179,7 @@ jlink {
 
     launcher {
         name = appMeta.name.replace(" ", "")
-        jvmArgs = listOf("-m", mainClassModule, "--enable-native-access", "javafx.graphics")
+        jvmArgs = listOf("--enable-native-access", "javafx.graphics")
     }
 
     jpackage {

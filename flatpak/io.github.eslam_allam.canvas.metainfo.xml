@@ -30,6 +30,16 @@
     <category>Office</category>
     <category>Utility</category>
   </categories>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Configure Canvas access and import rubrics from CSV</caption>
+      <image>https://raw.githubusercontent.com/eslam-allam/canvas-rubric-importer/main/screenshots/main.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Browse courses and assignments loaded from Canvas</caption>
+      <image>https://raw.githubusercontent.com/eslam-allam/canvas-rubric-importer/main/screenshots/assignments.png</image>
+    </screenshot>
+  </screenshots>
   <releases>
     <release version="1.2.5" date="2026-10-09"/>
     <release version="1.2.4" date="2026-05-05"/>

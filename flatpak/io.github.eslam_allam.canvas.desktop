@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Canvas Rubric Importer
+GenericName=Rubric Importer
+Comment=Import CSV Rubrics Into Canvas Directly
+Exec=CanvasRubricImporter
+Icon=io.github.eslam_allam.canvas
+Categories=Office;
+Keywords=canvas;rubric;csv;grading;
+StartupNotify=true

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.eslam_allam.canvas</id>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Canvas Rubric Importer</name>
+  <summary>Import CSV Rubrics Into Canvas Directly</summary>
+  <description>
+    <p>
+      Canvas Rubric Importer is a cross-platform desktop and CLI tool for
+      importing rubrics into Instructure Canvas from CSV files.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Generate Canvas-compatible rubrics from a simple CSV template</li>
+      <li>Upload rubrics to specific courses and assignments</li>
+      <li>Download existing rubrics from Canvas as CSV for editing or backup</li>
+      <li>Browse courses and assignments, and preview rubrics before upload</li>
+      <li>Run either as a GUI application or as a CLI tool</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">io.github.eslam_allam.canvas.desktop</launchable>
+  <url type="homepage">https://github.com/eslam-allam/canvas-rubric-importer</url>
+  <url type="bugtracker">https://github.com/eslam-allam/canvas-rubric-importer/issues</url>
+  <developer id="io.github.eslam_allam">
+    <name>Eslam Allam</name>
+  </developer>
+  <content_rating type="oars-1.1"/>
+  <categories>
+    <category>Office</category>
+    <category>Utility</category>
+  </categories>
+  <releases>
+    <release version="1.2.4" date="2026-10-09"/>
+  </releases>
+</component>

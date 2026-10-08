@@ -57,3 +57,7 @@ bin/
 kls_database.db
 .factorypath
 .settings
+
+# Flatpak build artifacts
+build-dir/
+.flatpak-builder/

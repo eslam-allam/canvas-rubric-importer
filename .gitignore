@@ -61,3 +61,4 @@ kls_database.db
 # Flatpak build artifacts
 build-dir/
 .flatpak-builder/
+flatpak-repo/

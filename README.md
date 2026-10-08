@@ -26,6 +26,7 @@ The project is written in Java, uses JavaFX for the GUI, and supports modular bu
 
 - **Installers and runtimes**
   - Linux: `.deb` and `.rpm` packages
+  - Linux: Flatpak bundle (`.flatpak`)
   - Windows: `.msi` installer with Start Menu and desktop shortcut
   - Each installer includes a custom runtime image (no external JRE required)
 
@@ -39,6 +40,7 @@ The project is written in Java, uses JavaFX for the GUI, and supports modular bu
 2. Download the installer for your platform:
    - **Linux (Debian/Ubuntu)**: `CanvasRubricImporter-<version>.deb`
    - **Linux (Fedora/openSUSE/RHEL)**: `CanvasRubricImporter-<version>.rpm`
+   - **Linux (any distribution with Flatpak)**: `CanvasRubricImporter-<version>.flatpak`
    - **Windows**: `CanvasRubricImporter-<version>.msi`
 3. Install it as you would any other package/installer for your OS.
 
@@ -51,6 +53,19 @@ After installation:
 - **Linux (.deb/.rpm)**
   - The installer places the application in your system applications menu (under a name similar to *Canvas Rubric Importer*), depending on your desktop environment.
   - You can also run it from the terminal (see below for CLI usage).
+
+- **Linux (Flatpak)**
+
+  ```bash
+  flatpak install --user CanvasRubricImporter-<version>.flatpak
+  ```
+
+  After installation the app appears in your applications menu, or you can launch it from the terminal:
+
+  ```bash
+  flatpak run io.github.eslam_allam.canvas          # GUI
+  flatpak run io.github.eslam_allam.canvas --cli    # CLI
+  ```
 
 > Note: Replace `<version>` with the actual version string shown on the Releases page.
 
@@ -76,7 +91,7 @@ cd canvas-rubric-importer
 ./gradlew runGui
 ```
 
-This uses the `runGui` task, which runs `MainApp` with the `--gui` flag and starts the JavaFX UI.
+This uses the `runGui` task, which runs `MainApp` (GUI is the default mode when no flags are passed) and starts the JavaFX UI.
 
 ### Run the CLI from source
 
@@ -84,7 +99,7 @@ This uses the `runGui` task, which runs `MainApp` with the `--gui` flag and star
 ./gradlew runCli
 ```
 
-This uses the `runCli` task, which runs `MainApp` with the `--cli` flag. If you run `MainApp` without `--gui`, it defaults to CLI mode.
+This uses the `runCli` task, which runs `MainApp` with the `--cli` flag. If you run `MainApp` without any flags, it starts in GUI mode (pass `--cli` to run the CLI).
 
 ### Run the installed app in CLI mode (Linux)
 
@@ -94,7 +109,13 @@ After installing the `.deb` or `.rpm`, you can usually run the CLI directly from
 CanvasRubricImporter --cli [options]
 ```
 
-Omitting `--gui` will keep the application in CLI mode.
+With the Flatpak:
+
+```bash
+flatpak run io.github.eslam_allam.canvas --cli [options]
+```
+
+Passing `--cli` selects CLI mode; without any flags the application starts in GUI mode.
 
 
 
@@ -130,6 +151,42 @@ Each of these tasks:
 
 - Uses `jlink` to build a minimal Java runtime image tailored to this app and JavaFX.
 - Uses `jpackage` to create the OS-specific installer.
+
+### Build the Flatpak from source
+
+You need `flatpak` and `flatpak-builder` (on Arch: `sudo pacman -S flatpak flatpak-builder`), plus the Flathub remote:
+
+```bash
+flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+```
+
+Build and install directly into your user installation:
+
+```bash
+flatpak-builder --force-clean --user --install build-dir flatpak/io.github.eslam_allam.canvas.yml
+```
+
+The first build downloads the freedesktop runtime and the JDK 25 SDK extension (several hundred MB, cached afterwards); Gradle and all dependencies are fetched inside the build sandbox. Later builds reuse the Gradle stage from the build cache unless the sources change.
+
+To produce a redistributable `.flatpak` bundle instead (the same file attached to releases):
+
+```bash
+flatpak-builder --force-clean --user --repo=flatpak-repo build-dir flatpak/io.github.eslam_allam.canvas.yml
+flatpak build-bundle flatpak-repo CanvasRubricImporter-<version>.flatpak io.github.eslam_allam.canvas
+```
+
+The Flatpak packaging lives in the `flatpak/` directory:
+
+- `io.github.eslam_allam.canvas.yml` — the flatpak-builder manifest
+- `launcher.sh` — the `/app/bin/CanvasRubricImporter` entry point
+- `io.github.eslam_allam.canvas.desktop` — desktop menu entry
+- `io.github.eslam_allam.canvas.metainfo.xml` — AppStream metadata
+
+Packaging notes:
+
+- The app is built from source inside the Flatpak sandbox with the `jlink` task, so the bundle contains its own Java runtime and JavaFX — no system JRE is required.
+- The manifest grants `--share=network` to the build (Gradle needs to download dependencies) and `--filesystem=home` to the app (JavaFX file dialogs do not use the xdg-desktop-portal).
+- JavaFX is X11-only, so the app is granted `--socket=x11` and runs via XWayland on Wayland sessions.
 
 ---
 
@@ -192,7 +249,7 @@ Refer to the CLI help (`--help`) for supported options once you have the binary 
     - `javafx-jmods/windows` for Windows builds
 
 - **jlink / jpackage**
-  - `jlinkImage` task builds a minimal runtime image in `build/image` using:
+  - `jlink` task builds a minimal runtime image in `build/image` using:
     - Platform-specific `javafx-jmods`
     - All resolved runtime dependencies (including your app JAR)
   - `packageDeb`, `packageRpm`, and `packageMsi` use that image via `--runtime-image`.

@@ -188,6 +188,32 @@ Packaging notes:
 - The manifest grants `--share=network` to the build (Gradle needs to download dependencies) and `--filesystem=home` to the app (JavaFX file dialogs do not use the xdg-desktop-portal).
 - JavaFX is X11-only, so the app is granted `--socket=x11` and runs via XWayland on Wayland sessions.
 
+### Publishing to Flathub
+
+Publishing is a one-time manual submission; updates are then automatic:
+
+1. **Submit the app** to Flathub following the
+   [submission guide](https://docs.flathub.org/docs/for-app-authors/submission).
+   Use `flatpak/io.github.eslam_allam.canvas.flathub.yml` as the manifest in the
+   generated `flathub/io.github.eslam_allam.canvas` repository — it is identical to
+   the local manifest except that it builds from a git tag of this repository.
+   Make sure that tag contains the `flatpak/` directory, and add screenshots to
+   the metainfo (required by Flathub).
+
+2. **Updates happen automatically**: the manifest's git source carries
+   `x-checker-data`, so Flathub's global External Data Checker opens an update PR
+   in `flathub/io.github.eslam_allam.canvas` within ~2 hours of every `vX.Y.Z` tag
+   pushed to this repository. A test build runs on the PR; once a maintainer
+   merges it, an official build is published to Flathub (usually within 1–2 hours).
+
+3. Keep the `<releases>` entry in
+   `flatpak/io.github.eslam_allam.canvas.metainfo.xml` current when tagging, since
+   the app's AppStream metadata is built from this repository.
+
+Note: the Flathub build runs Gradle with `--share=network` inside the build
+sandbox. If Flathub reviewers ask for fully offline builds, the Gradle/Maven
+dependencies would need to be pre-fetched as manifest sources instead.
+
 ---
 
 ## Usage overview

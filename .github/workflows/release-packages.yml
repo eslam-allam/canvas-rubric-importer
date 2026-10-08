@@ -108,14 +108,15 @@ jobs:
 
       - name: Create Flatpak bundle
         run: |
+          echo "BUNDLE_NAME=CanvasRubricImporter-${GITHUB_REF_NAME#v}.flatpak" >> "$GITHUB_ENV"
           flatpak build-bundle flatpak-repo \
-            "CanvasRubricImporter-${{ github.ref_name }}.flatpak" io.github.eslam_allam.canvas
+            "CanvasRubricImporter-${GITHUB_REF_NAME#v}.flatpak" io.github.eslam_allam.canvas
 
       - name: Upload Flatpak artifact
         uses: actions/upload-artifact@v4
         with:
           name: flatpak-package
-          path: "CanvasRubricImporter-${{ github.ref_name }}.flatpak"
+          path: ${{ env.BUNDLE_NAME }}
 
   create-release:
     name: Create GitHub Release and upload assets

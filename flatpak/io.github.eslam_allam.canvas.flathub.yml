@@ -1,0 +1,66 @@
+# Flathub copy of flatpak/io.github.eslam_allam.canvas.yml.
+# The only difference is the source: Flathub builds from a git tag of this
+# repository instead of the local working tree.
+#
+# The x-checker-data below makes Flathub's global External Data Checker open
+# an update PR in this repository whenever a new vX.Y.Z tag appears on
+# https://github.com/eslam-allam/canvas-rubric-importer (checked every ~2h).
+#
+# NOTE: tag/commit must point at a release that contains the flatpak/
+# directory (v1.2.4 does not — use the first tag created after the flatpak
+# packaging landed).
+app-id: io.github.eslam_allam.canvas
+runtime: org.freedesktop.Platform
+runtime-version: "25.08"
+sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.openjdk25
+command: CanvasRubricImporter
+
+finish-args:
+  # Canvas API access
+  - --share=network
+  # JavaFX is X11-only (no native Wayland); runs via XWayland on Wayland sessions
+  - --socket=x11
+  - --device=dri
+  # JavaFX FileChooser does not use xdg-desktop-portal
+  - --filesystem=home
+
+build-options:
+  append-path: /usr/lib/sdk/openjdk25/bin
+  # Gradle needs network to fetch the wrapper, plugins, and dependencies
+  build-args:
+    - --share=network
+  env:
+    JAVA_HOME: /usr/lib/sdk/openjdk25/jvm/openjdk-25
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+
+modules:
+  - name: canvas-rubric-importer
+    buildsystem: simple
+    build-commands:
+      - chmod +x gradlew
+      - ./gradlew --no-daemon jlink
+      # fail fast if the bundled runtime image ever changes shape
+      - test -x build/image/bin/CanvasRubricImporter
+      - mkdir -p /app/lib/canvas-rubric-importer
+      - cp -a build/image/. /app/lib/canvas-rubric-importer/
+      - install -Dm755 flatpak/launcher.sh /app/bin/CanvasRubricImporter
+      - install -Dm644 flatpak/io.github.eslam_allam.canvas.desktop
+        -t /app/share/applications
+      - install -Dm644 flatpak/io.github.eslam_allam.canvas.metainfo.xml
+        -t /app/share/metainfo
+      - install -Dm644 "icons/png/canvas_rubric_importer 128x128.png"
+        /app/share/icons/hicolor/128x128/apps/io.github.eslam_allam.canvas.png
+      - install -Dm644 "icons/png/canvas_rubric_importer 64x64.png"
+        /app/share/icons/hicolor/64x64/apps/io.github.eslam_allam.canvas.png
+      - install -Dm644 "icons/png/canvas_rubric_importer 32x32.png"
+        /app/share/icons/hicolor/32x32/apps/io.github.eslam_allam.canvas.png
+    sources:
+      - type: git
+        url: https://github.com/eslam-allam/canvas-rubric-importer.git
+        tag: v1.2.4
+        commit: 47988f60141e6b145d0bb19a45ae70d857f1e01e
+        x-checker-data:
+          type: git
+          tag-pattern: "^v([\\d.]+)$"

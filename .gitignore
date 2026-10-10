@@ -62,3 +62,7 @@ kls_database.db
 build-dir/
 .flatpak-builder/
 flatpak-repo/
+offline-repository/
+# created by flathub-build when run from the repository root
+/builddir/
+/repo/

@@ -4,6 +4,7 @@ import org.gradle.internal.jvm.Jvm
 buildscript {
     plugins {
         id("com.diffplug.spotless") version "8.1.0"
+        id("io.github.jwharm.flatpak-gradle-generator") version "1.8.0"
         id("org.beryx.jlink") version "3.2.0"
         id("org.openjfx.javafxplugin") version "0.1.0"
     }
@@ -14,6 +15,9 @@ plugins {
 }
 
 repositories {
+    // Offline Maven repository populated by flatpakGradleGenerator; the
+    // Flathub build resolves everything from here with --offline.
+    maven { url = uri("offline-repository") }
     mavenCentral()
 }
 
@@ -136,6 +140,18 @@ java {
 application {
     mainModule.set(appMeta.id)
     mainClass.set(mainClassName)
+}
+
+// Generates flatpak/flatpak-sources.json: every direct and transitive
+// dependency (including plugin dependencies) in a Maven repository layout
+// under offline-repository/, for the offline Flathub build.
+// Run with --no-configuration-cache after changing dependencies.
+tasks.named(
+    "flatpakGradleGenerator",
+    io.github.jwharm.flatpakgradlegenerator.FlatpakGradleGeneratorTask::class.java,
+) {
+    outputFile.set(file("flatpak/flatpak-sources.json"))
+    downloadDirectory.set("offline-repository")
 }
 
 tasks.register<JavaExec>("runCli") {
